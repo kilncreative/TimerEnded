@@ -285,7 +285,7 @@ export default function Timer() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="w-full max-w-sm text-center"
+              className="w-full max-w-sm text-center space-y-8"
               onClick={() => {
                 // Stop alarm when user taps the expired screen
                 if (audioRef.current && (audioRef.current as any).stopAlarm) {
@@ -293,18 +293,39 @@ export default function Timer() {
                 }
               }}
             >
-              {/* Timer Ended Display */}
-              <div className="mb-12">
+              {/* Timer Display showing 00:00 */}
+              <div>
                 <div 
-                  className="countdown-display text-8xl font-light mb-6 text-red-400"
+                  className="countdown-display text-8xl font-light mb-4 text-red-400"
                 >
                   00:00
                 </div>
                 <div 
-                  className="text-xl font-medium mb-4"
+                  className="text-lg font-medium"
                   style={{ color: 'var(--text-secondary)' }}
                 >
                   Timer ended {formatElapsedTime(elapsedSinceExpired)}
+                </div>
+              </div>
+
+              {/* Timer Options Section */}
+              <div 
+                className="rounded-2xl px-6 py-4"
+                style={{ backgroundColor: 'var(--dark-secondary)' }}
+              >
+                <div className="flex items-center justify-between py-3">
+                  <span 
+                    className="text-base font-medium"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    When Timer Ends
+                  </span>
+                  <span 
+                    className="text-base"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {alarmOption}
+                  </span>
                 </div>
               </div>
 
