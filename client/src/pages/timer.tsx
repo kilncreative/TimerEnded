@@ -154,18 +154,10 @@ export default function Timer() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--dark-primary)' }}>
       {/* Header */}
-      <header className="flex items-center justify-between p-4 border-b border-gray-800">
-        <button 
-          className="flex items-center text-green-500 text-lg font-medium"
-          onClick={() => window.history.back()}
-        >
-          <ChevronLeft className="w-5 h-5 mr-1" />
-          Timers
-        </button>
+      <header className="flex items-center justify-center p-4 relative">
         <h1 className="text-lg font-semibold text-white">
           {state === 'setup' ? getDisplayTime() : 'Timer'}
         </h1>
-        <div className="w-16"></div>
       </header>
 
       {/* Main Content */}
