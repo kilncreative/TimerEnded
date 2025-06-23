@@ -119,16 +119,16 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
   const canStart = selectedTime.hours > 0 || selectedTime.minutes > 0 || selectedTime.seconds > 0;
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Time Picker Wheels */}
       <div 
-        className="flex justify-center items-center mb-8 rounded-2xl p-4"
+        className="flex justify-center items-center rounded-2xl p-6"
         style={{ backgroundColor: 'var(--dark-secondary)' }}
       >
         {/* Hours Picker */}
         <div className="flex-1 text-center">
           <div 
-            className="text-sm font-medium mb-2"
+            className="text-sm font-medium mb-3"
             style={{ color: 'var(--text-secondary)' }}
           >
             hours
@@ -159,7 +159,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
           style={{ borderColor: 'var(--divider)' }}
         >
           <div 
-            className="text-sm font-medium mb-2"
+            className="text-sm font-medium mb-3"
             style={{ color: 'var(--text-secondary)' }}
           >
             min
@@ -187,7 +187,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
         {/* Seconds Picker */}
         <div className="flex-1 text-center">
           <div 
-            className="text-sm font-medium mb-2"
+            className="text-sm font-medium mb-3"
             style={{ color: 'var(--text-secondary)' }}
           >
             sec
@@ -214,7 +214,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-center mb-6">
+      <div className="flex justify-center">
         <button
           onClick={onStart}
           disabled={!canStart}
@@ -227,10 +227,10 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
 
       {/* Timer Options */}
       <div 
-        className="rounded-2xl p-4"
+        className="rounded-2xl px-6 py-4"
         style={{ backgroundColor: 'var(--dark-secondary)' }}
       >
-        <div className="flex items-center justify-between py-2 relative">
+        <div className="flex items-center justify-between py-3 relative">
           <span className="text-white font-medium">Alarm</span>
           <button
             onClick={() => setShowAlarmDropdown(!showAlarmDropdown)}
