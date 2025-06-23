@@ -293,21 +293,18 @@ export default function Timer() {
                 }
               }}
             >
-              {/* Expired Notification */}
-              <div 
-                className="mb-8 expired-glow rounded-2xl p-6"
-                style={{ backgroundColor: 'var(--timer-red)' }}
-              >
-                <div className="text-2xl font-semibold mb-2 text-white">Timer Expired</div>
-              </div>
-
-              {/* Elapsed Time Display */}
+              {/* Timer Ended Display */}
               <div className="mb-12">
                 <div 
-                  className="countdown-display text-6xl font-light mb-4 text-red-400"
+                  className="countdown-display text-8xl font-light mb-6 text-red-400"
                 >
-                  {Math.floor(elapsedSinceExpired / 60).toString().padStart(2, '0')}:
-                  {(elapsedSinceExpired % 60).toString().padStart(2, '0')}
+                  00:00
+                </div>
+                <div 
+                  className="text-xl font-medium mb-4"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Timer ended {formatElapsedTime(elapsedSinceExpired)}
                 </div>
               </div>
 
