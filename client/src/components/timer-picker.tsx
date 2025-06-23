@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface TimeValue {
   hours: number;
@@ -6,17 +6,24 @@ interface TimeValue {
   seconds: number;
 }
 
+type AlarmOption = '10 times' | '20 times' | 'Until Stopped';
+
 interface TimerPickerProps {
   selectedTime: TimeValue;
   onTimeChange: (time: TimeValue) => void;
   onStart: () => void;
   onCancel: () => void;
+  alarmOption: AlarmOption;
+  onAlarmOptionChange: (option: AlarmOption) => void;
 }
 
-export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCancel }: TimerPickerProps) {
+export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCancel, alarmOption, onAlarmOptionChange }: TimerPickerProps) {
   const hoursRef = useRef<HTMLDivElement>(null);
   const minutesRef = useRef<HTMLDivElement>(null);
   const secondsRef = useRef<HTMLDivElement>(null);
+  const [showAlarmDropdown, setShowAlarmDropdown] = useState(false);
+  
+  const alarmOptions: AlarmOption[] = ['10 times', '20 times', 'Until Stopped'];
 
   const generateNumbers = (max: number) => Array.from({ length: max }, (_, i) => i);
 
@@ -207,14 +214,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-center gap-6 mb-8">
-        <button
-          onClick={onCancel}
-          className="w-20 h-20 rounded-full flex items-center justify-center text-lg font-medium transition-all duration-200 active:scale-95"
-          style={{ backgroundColor: 'var(--cancel-gray)' }}
-        >
-          Cancel
-        </button>
+      <div className="flex justify-center mb-8">
         <button
           onClick={onStart}
           disabled={!canStart}
@@ -227,26 +227,41 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
 
       {/* Timer Options */}
       <div 
-        className="rounded-2xl p-4 space-y-3"
+        className="rounded-2xl p-4"
         style={{ backgroundColor: 'var(--dark-secondary)' }}
       >
-        <div className="flex items-center justify-between py-2">
-          <span className="text-white font-medium">Label</span>
-          <span style={{ color: 'var(--text-secondary)' }}>Timer</span>
-        </div>
-        <div 
-          className="h-px"
-          style={{ backgroundColor: 'var(--divider)' }}
-        ></div>
-        <div className="flex items-center justify-between py-2">
-          <span className="text-white font-medium">When Timer Ends</span>
-          <div 
+        <div className="flex items-center justify-between py-2 relative">
+          <span className="text-white font-medium">Alarm</span>
+          <button
+            onClick={() => setShowAlarmDropdown(!showAlarmDropdown)}
             className="flex items-center"
             style={{ color: 'var(--text-secondary)' }}
           >
-            <span>Radar</span>
+            <span>{alarmOption}</span>
             <span className="ml-2">›</span>
-          </div>
+          </button>
+          
+          {showAlarmDropdown && (
+            <div 
+              className="absolute top-full right-0 mt-2 rounded-2xl py-2 z-50 min-w-[150px]"
+              style={{ backgroundColor: 'var(--dark-tertiary)' }}
+            >
+              {alarmOptions.map((option) => (
+                <button
+                  key={option}
+                  onClick={() => {
+                    onAlarmOptionChange(option);
+                    setShowAlarmDropdown(false);
+                  }}
+                  className={`w-full px-4 py-2 text-left hover:bg-gray-700 ${
+                    option === alarmOption ? 'text-white' : 'text-gray-400'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

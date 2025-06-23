@@ -12,9 +12,12 @@ interface TimeValue {
   seconds: number;
 }
 
+type AlarmOption = '10 times' | '20 times' | 'Until Stopped';
+
 export default function Timer() {
   const [state, setState] = useState<TimerState>('setup');
   const [selectedTime, setSelectedTime] = useState<TimeValue>({ hours: 0, minutes: 0, seconds: 0 });
+  const [alarmOption, setAlarmOption] = useState<AlarmOption>('10 times');
   const [remainingTime, setRemainingTime] = useState<number>(0);
   const [expiredAt, setExpiredAt] = useState<Date | null>(null);
   const [elapsedSinceExpired, setElapsedSinceExpired] = useState<number>(0);
@@ -68,11 +71,13 @@ export default function Timer() {
       createSingleBeep();
       alarmCount++;
       
+      const maxBeeps = alarmOption === '10 times' ? 10 : alarmOption === '20 times' ? 20 : Infinity;
+      
       alarmIntervalRef = setInterval(() => {
-        if (alarmCount < 10) {
+        if (alarmCount < maxBeeps) {
           createSingleBeep();
           alarmCount++;
-        } else {
+        } else if (alarmOption !== 'Until Stopped') {
           if (alarmIntervalRef) {
             clearInterval(alarmIntervalRef);
             alarmIntervalRef = null;
@@ -250,6 +255,8 @@ export default function Timer() {
                 onTimeChange={setSelectedTime}
                 onStart={handleStart}
                 onCancel={handleReset}
+                alarmOption={alarmOption}
+                onAlarmOptionChange={setAlarmOption}
               />
             </motion.div>
           )}
