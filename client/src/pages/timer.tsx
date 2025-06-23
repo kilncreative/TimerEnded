@@ -24,10 +24,95 @@ export default function Timer() {
 
   // Initialize audio
   useEffect(() => {
-    // Create audio element for timer notification
+    // Create audio element for timer notification with a proper alarm sound
     audioRef.current = new Audio();
-    // Using a simple beep sound - in production you'd want a proper timer sound
-    audioRef.current.src = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmAcBC2BzO/aiSsFGXm/7OOfUQ0OTqXh8LNjHAU7k9n1vX8lBSl+zfDejjcIG2m5yvOkUgwMTKXo7bROCw5KnOvz0m8gAC5+2u+rQAcSebzs552QTAsOSJ7l7apSEgZGneDuvmIcBC2CzO/aiSwGGXm/7OOeUgwMTKPn77VjGgU6k9n0vn8lBCp/zfDejjcHG2q5yvOkUgwMTKXo7bROCQ5KnOvz0m8gAC5+2u+rQAcSebzs552QTAsOSJ7l7apSEgZGneDuvmIcBC2CzO/aiSwGGXm/7OOeUgwMTKPn77VjGgU6k9n0vn8lBCp/zfDejjcHG2q5yvOkUgwMTKXo7bROCQ5KnOvz0m8gAC5+2u+rQAcSebzs552QTAsOSJ7l7apSEgZGneDuvmIcBC2CzO/aiSwGGXm/7OOeUgwMTKPn77VjGgU6k9n0vn8lBCp/zfDejjcHG2q5yvOkUgwMTKXo7bROCQ5KnOvz0m8gAC5+2u+rQAcSebzs552QTAsOSJ7l7apSEgZGneDuvmIcBC2CzO/aiSwGGXm/7OOeUgwMTKPn77VjGgU6k9n0vn8lBCp/zfDejjcHG2q5yvOkUgwMTKXo7bROCQ5KnOvz0m8gAC5+2u+rQAcSebzs552QTAsOSJ7l7apSEgZGneDuvmIcBC2CzO/aiSwGGXm/7OOeUgwMTKPn77VjGgU6k9n0vn8lBCp/zfDejjcHG2q5yvOkUgwMTKXo7bROCQ5KnOvz0m8gAC5+2u+rQAcSebzs552QTAsOSJ7l7apSEgZGneDuvmIcBC2CzO/aiSwGGXm/7OOeUgwMTKPn77VjGgU6k9n0vn8lBCp/zfDejjcHG2q5yvOkUgwMTKXo7bROCQ5KnOvz0m8gAC5+2u+rQAcSebzs552QTAsOSJ7l7apSEgZGneDuvmIcBC2CzO/aiSwGGXm/7OOeUgwMTKPn77VjGgU6k9n0vn8lBCp/zfDejjcHG2q5yvOkUgwMTKXo7bROCQ5KnOvz0m8gAC5+2u+rQAcSebzs552QTAsOSJ7l7apSEgZGneDuvmIcBC2CzO/aiSwGGXm/7OOeUgwMTKPn77VjGgU6k9n0vn8lBCp/zfDejjcHG2q5yvOkUgwMTKXo7bROCQ5KnOvz0m8gAC5+2u+rQAcSebzs552QTAsOSJ7l7apSEgZGneDuvmIcBC2CzO/aiSwGGXm/7OOeUg==";
+    // Multi-tone alarm sound that's more noticeable
+    audioRef.current.src = "data:audio/wav;base64,UklGRkgOAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAA==";
+    audioRef.current.volume = 0.8;
+    
+    // Create a synthetic alarm sound using Web Audio API as fallback
+    const createAlarmSound = () => {
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator1 = audioContext.createOscillator();
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator1.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator2.frequency.setValueAtTime(1000, audioContext.currentTime);
+        
+        oscillator1.type = 'sine';
+        oscillator2.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+        
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator1.start(audioContext.currentTime);
+        oscillator2.start(audioContext.currentTime);
+        oscillator1.stop(audioContext.currentTime + 1);
+        oscillator2.stop(audioContext.currentTime + 1);
+        
+        // Play multiple beeps
+        setTimeout(() => {
+          const osc3 = audioContext.createOscillator();
+          const osc4 = audioContext.createOscillator();
+          const gain2 = audioContext.createGain();
+          
+          osc3.frequency.setValueAtTime(800, audioContext.currentTime);
+          osc4.frequency.setValueAtTime(1000, audioContext.currentTime);
+          osc3.type = 'sine';
+          osc4.type = 'sine';
+          
+          gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+          
+          osc3.connect(gain2);
+          osc4.connect(gain2);
+          gain2.connect(audioContext.destination);
+          
+          osc3.start(audioContext.currentTime);
+          osc4.start(audioContext.currentTime);
+          osc3.stop(audioContext.currentTime + 1);
+          osc4.stop(audioContext.currentTime + 1);
+        }, 500);
+        
+        setTimeout(() => {
+          const osc5 = audioContext.createOscillator();
+          const osc6 = audioContext.createOscillator();
+          const gain3 = audioContext.createGain();
+          
+          osc5.frequency.setValueAtTime(800, audioContext.currentTime);
+          osc6.frequency.setValueAtTime(1000, audioContext.currentTime);
+          osc5.type = 'sine';
+          osc6.type = 'sine';
+          
+          gain3.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gain3.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+          
+          osc5.connect(gain3);
+          osc6.connect(gain3);
+          gain3.connect(audioContext.destination);
+          
+          osc5.start(audioContext.currentTime);
+          osc6.start(audioContext.currentTime);
+          osc5.stop(audioContext.currentTime + 1);
+          osc6.stop(audioContext.currentTime + 1);
+        }, 1000);
+      } catch (error) {
+        console.warn('Web Audio API not supported, using fallback beep');
+      }
+    };
+    
+    // Override the audio play function to use our custom alarm
+    const originalPlay = audioRef.current.play.bind(audioRef.current);
+    audioRef.current.play = () => {
+      createAlarmSound();
+      return originalPlay().catch(() => createAlarmSound());
+    };
     
     return () => {
       if (audioRef.current) {
