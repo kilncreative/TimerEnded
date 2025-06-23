@@ -30,8 +30,11 @@ export default function Timer() {
     audioRef.current.src = "data:audio/wav;base64,UklGRkgOAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAA==";
     audioRef.current.volume = 0.8;
     
-    // Create a synthetic alarm sound using Web Audio API as fallback
-    const createAlarmSound = () => {
+    // Create a repeating alarm sound using Web Audio API
+    let alarmIntervalRef: NodeJS.Timeout | null = null;
+    let alarmCount = 0;
+    
+    const createSingleBeep = () => {
       try {
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         const oscillator1 = audioContext.createOscillator();
@@ -45,7 +48,7 @@ export default function Timer() {
         oscillator2.type = 'sine';
         
         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
         
         oscillator1.connect(gainNode);
         oscillator2.connect(gainNode);
@@ -53,66 +56,48 @@ export default function Timer() {
         
         oscillator1.start(audioContext.currentTime);
         oscillator2.start(audioContext.currentTime);
-        oscillator1.stop(audioContext.currentTime + 1);
-        oscillator2.stop(audioContext.currentTime + 1);
-        
-        // Play multiple beeps
-        setTimeout(() => {
-          const osc3 = audioContext.createOscillator();
-          const osc4 = audioContext.createOscillator();
-          const gain2 = audioContext.createGain();
-          
-          osc3.frequency.setValueAtTime(800, audioContext.currentTime);
-          osc4.frequency.setValueAtTime(1000, audioContext.currentTime);
-          osc3.type = 'sine';
-          osc4.type = 'sine';
-          
-          gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
-          gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
-          
-          osc3.connect(gain2);
-          osc4.connect(gain2);
-          gain2.connect(audioContext.destination);
-          
-          osc3.start(audioContext.currentTime);
-          osc4.start(audioContext.currentTime);
-          osc3.stop(audioContext.currentTime + 1);
-          osc4.stop(audioContext.currentTime + 1);
-        }, 500);
-        
-        setTimeout(() => {
-          const osc5 = audioContext.createOscillator();
-          const osc6 = audioContext.createOscillator();
-          const gain3 = audioContext.createGain();
-          
-          osc5.frequency.setValueAtTime(800, audioContext.currentTime);
-          osc6.frequency.setValueAtTime(1000, audioContext.currentTime);
-          osc5.type = 'sine';
-          osc6.type = 'sine';
-          
-          gain3.gain.setValueAtTime(0.3, audioContext.currentTime);
-          gain3.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
-          
-          osc5.connect(gain3);
-          osc6.connect(gain3);
-          gain3.connect(audioContext.destination);
-          
-          osc5.start(audioContext.currentTime);
-          osc6.start(audioContext.currentTime);
-          osc5.stop(audioContext.currentTime + 1);
-          osc6.stop(audioContext.currentTime + 1);
-        }, 1000);
+        oscillator1.stop(audioContext.currentTime + 0.3);
+        oscillator2.stop(audioContext.currentTime + 0.3);
       } catch (error) {
-        console.warn('Web Audio API not supported, using fallback beep');
+        console.warn('Web Audio API not supported');
       }
     };
     
-    // Override the audio play function to use our custom alarm
+    const createAlarmSound = () => {
+      alarmCount = 0;
+      createSingleBeep();
+      alarmCount++;
+      
+      alarmIntervalRef = setInterval(() => {
+        if (alarmCount < 10) {
+          createSingleBeep();
+          alarmCount++;
+        } else {
+          if (alarmIntervalRef) {
+            clearInterval(alarmIntervalRef);
+            alarmIntervalRef = null;
+          }
+        }
+      }, 500);
+    };
+    
+    const stopAlarm = () => {
+      if (alarmIntervalRef) {
+        clearInterval(alarmIntervalRef);
+        alarmIntervalRef = null;
+        alarmCount = 0;
+      }
+    };
+    
+    // Override the audio play function to use our repeating alarm
     const originalPlay = audioRef.current.play.bind(audioRef.current);
     audioRef.current.play = () => {
       createAlarmSound();
       return originalPlay().catch(() => createAlarmSound());
     };
+    
+    // Store references for cleanup
+    (audioRef.current as any).stopAlarm = stopAlarm;
     
     return () => {
       if (audioRef.current) {
@@ -198,6 +183,10 @@ export default function Timer() {
   };
 
   const handleReset = () => {
+    // Stop any playing alarm
+    if (audioRef.current && (audioRef.current as any).stopAlarm) {
+      (audioRef.current as any).stopAlarm();
+    }
     setState('setup');
     setRemainingTime(0);
     setExpiredAt(null);
@@ -290,6 +279,12 @@ export default function Timer() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               className="w-full max-w-sm text-center"
+              onClick={() => {
+                // Stop alarm when user taps the expired screen
+                if (audioRef.current && (audioRef.current as any).stopAlarm) {
+                  (audioRef.current as any).stopAlarm();
+                }
+              }}
             >
               {/* Expired Notification */}
               <div 
@@ -297,19 +292,10 @@ export default function Timer() {
                 style={{ backgroundColor: 'var(--timer-red)' }}
               >
                 <div className="text-2xl font-semibold mb-2 text-white">Timer Expired</div>
-                <div className="text-red-100 text-lg">
-                  {formatElapsedTime(elapsedSinceExpired)}
-                </div>
               </div>
 
               {/* Elapsed Time Display */}
               <div className="mb-12">
-                <div 
-                  className="text-sm font-medium mb-2"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Time since expiration
-                </div>
                 <div 
                   className="countdown-display text-6xl font-light mb-4 text-red-400"
                 >
