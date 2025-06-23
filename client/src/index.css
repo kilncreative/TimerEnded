@@ -163,9 +163,9 @@
     top: 50%;
     left: 0;
     right: 0;
-    height: 2px;
+    height: 1px;
     background: var(--divider);
-    transform: translateY(-1px);
+    transform: translateY(-16px);
     z-index: 10;
   }
 
@@ -175,9 +175,9 @@
     top: 50%;
     left: 0;
     right: 0;
-    height: 2px;
+    height: 1px;
     background: var(--divider);
-    transform: translateY(30px);
+    transform: translateY(16px);
     z-index: 10;
   }
 }

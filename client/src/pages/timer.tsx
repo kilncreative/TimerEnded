@@ -14,7 +14,7 @@ interface TimeValue {
 
 export default function Timer() {
   const [state, setState] = useState<TimerState>('setup');
-  const [selectedTime, setSelectedTime] = useState<TimeValue>({ hours: 0, minutes: 10, seconds: 0 });
+  const [selectedTime, setSelectedTime] = useState<TimeValue>({ hours: 0, minutes: 0, seconds: 0 });
   const [remainingTime, setRemainingTime] = useState<number>(0);
   const [expiredAt, setExpiredAt] = useState<Date | null>(null);
   const [elapsedSinceExpired, setElapsedSinceExpired] = useState<number>(0);

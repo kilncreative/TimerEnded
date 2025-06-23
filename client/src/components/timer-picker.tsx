@@ -20,33 +20,24 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
 
   const generateNumbers = (max: number) => Array.from({ length: max }, (_, i) => i);
 
-  const updatePickerSelection = (picker: HTMLDivElement, type: 'hours' | 'minutes' | 'seconds') => {
+  const updatePickerSelection = (picker: HTMLDivElement, type: 'hours' | 'minutes' | 'seconds', shouldUpdateState = true) => {
+    const itemHeight = 32;
+    const scrollTop = picker.scrollTop;
+    const selectedIndex = Math.round(scrollTop / itemHeight);
+    
     const items = picker.querySelectorAll('.picker-item');
-    const containerRect = picker.getBoundingClientRect();
-    const centerY = containerRect.top + containerRect.height / 2;
-    
-    let closest: Element | null = null;
-    let closestDistance = Infinity;
-    
-    items.forEach(item => {
-      const itemRect = item.getBoundingClientRect();
-      const itemCenterY = itemRect.top + itemRect.height / 2;
-      const distance = Math.abs(centerY - itemCenterY);
-      
-      if (distance < closestDistance) {
-        closest = item;
-        closestDistance = distance;
+    items.forEach((item, index) => {
+      const htmlItem = item as HTMLElement;
+      htmlItem.classList.remove('selected');
+      if (index === selectedIndex) {
+        htmlItem.classList.add('selected');
       }
-      
-      item.classList.remove('selected');
     });
     
-    if (closest) {
-      closest.classList.add('selected');
-      const value = parseInt(closest.getAttribute('data-value') || '0');
+    if (shouldUpdateState && selectedIndex >= 0) {
       onTimeChange({
         ...selectedTime,
-        [type]: value
+        [type]: selectedIndex
       });
     }
   };
@@ -55,31 +46,54 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
     if (!ref.current) return;
 
     const picker = ref.current;
+    const itemHeight = 32; // Height of each picker item
+    
     const scrollToValue = (value: number) => {
-      const item = picker.querySelector(`[data-value="${value}"]`) as HTMLElement;
-      if (item) {
-        const itemTop = item.offsetTop;
-        const containerHeight = picker.clientHeight;
-        const itemHeight = item.clientHeight;
-        const scrollTop = itemTop - (containerHeight / 2) + (itemHeight / 2);
-        picker.scrollTop = scrollTop;
-      }
+      const scrollTop = value * itemHeight;
+      picker.scrollTop = scrollTop;
     };
 
     // Set initial scroll position
     scrollToValue(selectedTime[type]);
 
+    let isSnapping = false;
+    
+    const snapToNearest = () => {
+      if (isSnapping) return;
+      isSnapping = true;
+      
+      const scrollTop = picker.scrollTop;
+      const nearestIndex = Math.round(scrollTop / itemHeight);
+      const targetScrollTop = nearestIndex * itemHeight;
+      
+      picker.scrollTo({
+        top: targetScrollTop,
+        behavior: 'smooth'
+      });
+      
+      setTimeout(() => {
+        isSnapping = false;
+        updatePickerSelection(picker, type);
+      }, 200);
+    };
+
+    let scrollTimeout: NodeJS.Timeout;
+    
     const handleScroll = () => {
-      updatePickerSelection(picker, type);
+      if (!isSnapping) {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(snapToNearest, 150);
+      }
     };
 
     picker.addEventListener('scroll', handleScroll);
     
-    // Initial selection update
-    setTimeout(() => updatePickerSelection(picker, type), 100);
+    // Initial selection update - don't change state on first load
+    setTimeout(() => updatePickerSelection(picker, type, false), 100);
 
     return () => {
       picker.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
     };
   };
 
@@ -121,7 +135,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
                 {generateNumbers(24).map(hour => (
                   <div
                     key={hour}
-                    className="picker-item py-1 text-2xl font-medium cursor-pointer"
+                    className="picker-item h-8 flex items-center justify-center text-2xl font-medium cursor-pointer"
                     data-value={hour}
                   >
                     {hour}
@@ -152,7 +166,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
                 {generateNumbers(60).map(minute => (
                   <div
                     key={minute}
-                    className="picker-item py-1 text-2xl font-medium cursor-pointer"
+                    className="picker-item h-8 flex items-center justify-center text-2xl font-medium cursor-pointer"
                     data-value={minute}
                   >
                     {minute}
@@ -180,7 +194,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
                 {generateNumbers(60).map(second => (
                   <div
                     key={second}
-                    className="picker-item py-1 text-2xl font-medium cursor-pointer"
+                    className="picker-item h-8 flex items-center justify-center text-2xl font-medium cursor-pointer"
                     data-value={second}
                   >
                     {second}
