@@ -122,7 +122,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
     <div>
       {/* Time Picker Wheels */}
       <div 
-        className="flex justify-center items-center mb-12 rounded-2xl p-6"
+        className="flex justify-center items-center mb-8 rounded-2xl p-4"
         style={{ backgroundColor: 'var(--dark-secondary)' }}
       >
         {/* Hours Picker */}
@@ -138,7 +138,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
               ref={hoursRef}
               className="picker-container h-32 overflow-y-auto"
             >
-              <div className="py-12">
+              <div className="py-12 space-y-0">
                 {generateNumbers(24).map(hour => (
                   <div
                     key={hour}
@@ -169,7 +169,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
               ref={minutesRef}
               className="picker-container h-32 overflow-y-auto"
             >
-              <div className="py-12">
+              <div className="py-12 space-y-0">
                 {generateNumbers(60).map(minute => (
                   <div
                     key={minute}
@@ -197,7 +197,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
               ref={secondsRef}
               className="picker-container h-32 overflow-y-auto"
             >
-              <div className="py-12">
+              <div className="py-12 space-y-0">
                 {generateNumbers(60).map(second => (
                   <div
                     key={second}
@@ -214,7 +214,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-center mb-8">
+      <div className="flex justify-center mb-6">
         <button
           onClick={onStart}
           disabled={!canStart}
