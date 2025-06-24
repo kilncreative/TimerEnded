@@ -5,7 +5,7 @@ import { useTimer } from '@/hooks/useTimer';
 export default function Timer() {
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
-  const [seconds, setSeconds] = useState(1);
+  const [seconds, setSeconds] = useState(0);
   const [alarmRepeat, setAlarmRepeat] = useState('10');
   const [showAlarmDropdown, setShowAlarmDropdown] = useState(false);
 
@@ -115,80 +115,78 @@ export default function Timer() {
   if (currentScreen === 'setup') {
     return (
       <div className="timer-app">
-        <div className="flex-1 flex flex-col justify-center px-5 py-8">
-          <div className="flex flex-col items-center space-y-8">
-            {/* Current Timer Display */}
-            <div className="text-center">
-              <div className="text-2xl font-light mb-2 text-white">
-                {formatCurrentTime()}
-              </div>
+        <div className="flex-1 flex flex-col justify-center items-center px-5 py-8 space-y-8">
+          {/* Current Timer Display */}
+          <div className="text-center">
+            <div className="text-3xl font-light text-white">
+              {formatCurrentTime()}
+            </div>
+          </div>
+          
+          {/* Time Picker */}
+          <div className="timer-picker w-full max-w-sm">
+            <div className="grid grid-cols-3 gap-4 text-center mb-4">
+              <div className="text-ios-light-gray text-sm font-medium">hours</div>
+              <div className="text-ios-light-gray text-sm font-medium">min</div>
+              <div className="text-ios-light-gray text-sm font-medium">sec</div>
             </div>
             
-            {/* Time Picker */}
-            <div className="timer-picker">
-              <div className="grid grid-cols-3 gap-4 text-center mb-4">
-                <div className="text-ios-light-gray text-sm font-medium">hours</div>
-                <div className="text-ios-light-gray text-sm font-medium">min</div>
-                <div className="text-ios-light-gray text-sm font-medium">sec</div>
-              </div>
-              
-              <TimePicker 
-                hours={hours}
-                minutes={minutes}
-                seconds={seconds}
-                onHoursChange={setHours}
-                onMinutesChange={setMinutes}
-                onSecondsChange={setSeconds}
-              />
-            </div>
-            
-            {/* Start Button */}
+            <TimePicker 
+              hours={hours}
+              minutes={minutes}
+              seconds={seconds}
+              onHoursChange={setHours}
+              onMinutesChange={setMinutes}
+              onSecondsChange={setSeconds}
+            />
+          </div>
+          
+          {/* Start Button */}
+          <button 
+            className={`timer-button ${isValidTime ? 'timer-button-green' : 'timer-button-disabled'}`}
+            onClick={handleStart}
+            disabled={!isValidTime}
+          >
+            Start
+          </button>
+          
+          {/* Alarm Settings */}
+          <div className="alarm-container timer-picker w-full max-w-sm relative">
             <button 
-              className={`timer-button ${isValidTime ? 'timer-button-green' : 'timer-button-disabled'}`}
-              onClick={handleStart}
-              disabled={!isValidTime}
+              className="w-full p-4 flex items-center justify-between text-left"
+              onClick={() => setShowAlarmDropdown(!showAlarmDropdown)}
             >
-              Start
+              <span className="text-white font-medium">Alarm</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-ios-light-gray">
+                  {selectedAlarmOption?.label}
+                </span>
+                <svg 
+                  className={`w-4 h-4 text-ios-light-gray transform transition-transform ${showAlarmDropdown ? 'rotate-180' : ''}`}
+                  viewBox="0 0 16 16"
+                >
+                  <path fill="currentColor" d="M8 12l-4-4h8l-4 4z"/>
+                </svg>
+              </div>
             </button>
             
-            {/* Alarm Settings */}
-            <div className="alarm-container timer-picker w-full max-w-sm relative">
-              <button 
-                className="w-full p-4 flex items-center justify-between text-left"
-                onClick={() => setShowAlarmDropdown(!showAlarmDropdown)}
-              >
-                <span className="text-white font-medium">Alarm</span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-ios-light-gray">
-                    {selectedAlarmOption?.label}
-                  </span>
-                  <svg 
-                    className={`w-4 h-4 text-ios-light-gray transform transition-transform ${showAlarmDropdown ? 'rotate-180' : ''}`}
-                    viewBox="0 0 16 16"
+            {/* Alarm Dropdown */}
+            {showAlarmDropdown && (
+              <div className="absolute top-full left-0 right-0 bg-ios-dark-gray rounded-2xl mt-2 overflow-hidden z-50">
+                {alarmOptions.map((option, index) => (
+                  <button 
+                    key={option.value}
+                    className={`w-full p-4 text-left text-white hover:bg-gray-700 transition-colors ${index === alarmOptions.length - 1 ? 'border-t border-gray-600' : ''}`}
+                    onClick={() => {
+                      setAlarmRepeat(option.value);
+                      setShowAlarmDropdown(false);
+                    }}
                   >
-                    <path fill="currentColor" d="M8 12l-4-4h8l-4 4z"/>
-                  </svg>
-                </div>
-              </button>
-              
-              {/* Alarm Dropdown */}
-              {showAlarmDropdown && (
-                <div className="absolute top-full left-0 right-0 bg-ios-dark-gray rounded-2xl mt-2 overflow-hidden z-50">
-                  {alarmOptions.map((option, index) => (
-                    <button 
-                      key={option.value}
-                      className={`w-full p-4 text-left text-white hover:bg-gray-700 transition-colors ${index === alarmOptions.length - 1 ? 'border-t border-gray-600' : ''}`}
-                      onClick={() => {
-                        setAlarmRepeat(option.value);
-                        setShowAlarmDropdown(false);
-                      }}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
