@@ -9,6 +9,11 @@ export default function Timer() {
   const [alarmRepeat, setAlarmRepeat] = useState('10');
   const [showAlarmDropdown, setShowAlarmDropdown] = useState(false);
 
+  // Debug state changes
+  console.log('Timer state:', { hours, minutes, seconds, totalSeconds: hours * 3600 + minutes * 60 + seconds });
+
+
+
   const {
     currentScreen,
     remainingTime,
