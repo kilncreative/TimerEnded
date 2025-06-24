@@ -79,32 +79,32 @@
   flex-direction: column;
 }
 
-/* Apple iOS Clock Timer Picker - Exact Replica */
+/* Apple iOS Clock Timer Picker - Clean Design */
 .timer-picker {
   background: #2C2C2E;
   border-radius: 13px;
   width: 100%;
-  max-width: 370px;
+  max-width: 350px;
   overflow: hidden;
   position: relative;
   margin: 0 auto;
 }
 
 .picker-headers {
-  padding: 16px 0 10px 0;
+  padding: 20px 0 16px 0;
   background: #2C2C2E;
   border-bottom: 0.33px solid #48484A;
 }
 
 .picker-container {
-  height: 162px;
+  height: 120px;
   overflow: hidden;
   position: relative;
   background: #2C2C2E;
 }
 
 .picker-column {
-  height: 162px;
+  height: 120px;
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
@@ -128,18 +128,18 @@
 }
 
 .picker-item {
-  height: 34px;
-  min-height: 34px;
+  height: 40px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 23px;
+  font-size: 24px;
   font-weight: 400;
   transition: all 0.2s ease-out;
   user-select: none;
   pointer-events: none;
   flex-shrink: 0;
-  opacity: 0.3;
+  opacity: 0.15;
   color: #FFFFFF;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
   letter-spacing: -0.3px;
@@ -148,15 +148,14 @@
 .picker-overlay {
   position: absolute;
   top: 50%;
-  left: 0;
-  right: 0;
-  height: 34px;
-  transform: translateY(-17px);
-  border-top: 0.33px solid #636366;
-  border-bottom: 0.33px solid #636366;
+  left: 8px;
+  right: 8px;
+  height: 40px;
+  transform: translateY(-20px);
+  background: rgba(99, 99, 102, 0.15);
+  border-radius: 8px;
   pointer-events: none;
-  z-index: 10;
-  background: transparent;
+  z-index: 5;
 }
 
 /* Button Styles */

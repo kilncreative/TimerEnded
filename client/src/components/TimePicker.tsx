@@ -21,14 +21,14 @@ export default function TimePicker({
   const minutesRef = useRef<HTMLDivElement>(null);
   const secondsRef = useRef<HTMLDivElement>(null);
 
-  const itemHeight = 34;
-  const visibleItems = 5; // Number of visible items
-  const centerIndex = Math.floor(visibleItems / 2); // Index of the center item
+  const itemHeight = 40;
+  const visibleItems = 3; // Only 3 visible items
+  const centerIndex = Math.floor(visibleItems / 2); // Index of the center item (1)
 
   const createPickerItems = (max: number) => {
     const items = [];
     
-    // Add padding items at the top
+    // Add padding items at the top (1 item)
     for (let i = 0; i < centerIndex; i++) {
       items.push(
         <div key={`padding-top-${i}`} className="picker-item" style={{ height: itemHeight }}>
@@ -45,7 +45,7 @@ export default function TimePicker({
       );
     }
     
-    // Add padding items at the bottom
+    // Add padding items at the bottom (1 item)
     for (let i = 0; i < centerIndex; i++) {
       items.push(
         <div key={`padding-bottom-${i}`} className="picker-item" style={{ height: itemHeight }}>
@@ -68,16 +68,19 @@ export default function TimePicker({
       const distance = Math.abs(centerPosition - itemCenter);
       
       if (distance < itemHeight / 2) {
+        // Center item - selected
         element.style.opacity = '1';
-        element.style.fontSize = '23px';
+        element.style.fontSize = '24px';
         element.style.fontWeight = '600';
-      } else if (distance < itemHeight * 1.5) {
-        element.style.opacity = '0.6';
-        element.style.fontSize = '23px';
+      } else if (distance < itemHeight) {
+        // Adjacent items - faded
+        element.style.opacity = '0.4';
+        element.style.fontSize = '24px';
         element.style.fontWeight = '400';
       } else {
-        element.style.opacity = '0.3';
-        element.style.fontSize = '23px';
+        // Far items - very faded
+        element.style.opacity = '0.15';
+        element.style.fontSize = '24px';
         element.style.fontWeight = '400';
       }
     });
