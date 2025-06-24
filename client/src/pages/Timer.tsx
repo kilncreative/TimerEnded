@@ -129,10 +129,10 @@ export default function Timer() {
           
           {/* Time Picker */}
           <div className="timer-picker w-full max-w-md">
-            <div className="picker-headers grid grid-cols-3 text-center px-8">
-              <div className="text-ios-light-gray text-lg font-normal">hours</div>
-              <div className="text-ios-light-gray text-lg font-normal">min</div>
-              <div className="text-ios-light-gray text-lg font-normal">sec</div>
+            <div className="picker-headers grid grid-cols-3 text-center">
+              <div className="text-ios-light-gray text-base font-medium">hours</div>
+              <div className="text-ios-light-gray text-base font-medium">min</div>
+              <div className="text-ios-light-gray text-base font-medium">sec</div>
             </div>
             
             <TimePicker 
