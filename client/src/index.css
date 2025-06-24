@@ -81,26 +81,39 @@
 
 /* Time Picker Styles */
 .timer-picker {
-  background: var(--ios-dark-gray);
-  border-radius: 1rem;
-  padding: 1.5rem;
+  background: hsl(0, 0%, 17%);
+  border-radius: 16px;
+  padding: 0;
   width: 100%;
-  max-width: 24rem;
+  max-width: 380px;
+  overflow: hidden;
+}
+
+.picker-headers {
+  border-bottom: 1px solid hsl(0, 0%, 25%);
 }
 
 .picker-container {
-  height: 200px;
+  height: 160px;
   overflow: hidden;
   position: relative;
+  background: transparent;
 }
 
 .picker-column {
-  height: 200px;
+  height: 160px;
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
   -ms-overflow-style: none;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid hsl(0, 0%, 25%);
+}
+
+.picker-column:last-child {
+  border-right: none;
 }
 
 .picker-column::-webkit-scrollbar {
@@ -108,15 +121,18 @@
 }
 
 .picker-item {
-  height: 40px;
+  height: 32px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 24px;
   font-weight: 300;
   transition: opacity 0.1s ease;
   user-select: none;
   pointer-events: none;
+  flex-shrink: 0;
+  opacity: 0.3;
 }
 
 .picker-overlay {
@@ -124,12 +140,13 @@
   top: 50%;
   left: 0;
   right: 0;
-  height: 40px;
-  transform: translateY(-50%);
-  border-top: 1px solid hsl(0, 0%, 20%);
-  border-bottom: 1px solid hsl(0, 0%, 20%);
+  height: 32px;
+  transform: translateY(-16px);
+  border-top: 1px solid hsl(0, 0%, 35%);
+  border-bottom: 1px solid hsl(0, 0%, 35%);
   pointer-events: none;
   z-index: 10;
+  background: transparent;
 }
 
 /* Button Styles */
