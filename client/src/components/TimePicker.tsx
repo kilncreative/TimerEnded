@@ -21,7 +21,7 @@ export default function TimePicker({
   const minutesRef = useRef<HTMLDivElement>(null);
   const secondsRef = useRef<HTMLDivElement>(null);
 
-  const itemHeight = 36;
+  const itemHeight = 32;
   const visibleItems = 5; // Number of visible items
   const centerIndex = Math.floor(visibleItems / 2); // Index of the center item
 
@@ -69,15 +69,15 @@ export default function TimePicker({
       
       if (distance < itemHeight / 2) {
         element.style.opacity = '1';
-        element.style.fontSize = '24px';
+        element.style.fontSize = '22px';
         element.style.fontWeight = '300';
       } else if (distance < itemHeight * 1.5) {
         element.style.opacity = '0.6';
-        element.style.fontSize = '22px';
+        element.style.fontSize = '20px';
         element.style.fontWeight = '200';
       } else {
-        element.style.opacity = '0.4';
-        element.style.fontSize = '20px';
+        element.style.opacity = '0.3';
+        element.style.fontSize = '18px';
         element.style.fontWeight = '200';
       }
     });
