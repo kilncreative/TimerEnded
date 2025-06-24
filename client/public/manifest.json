@@ -1,0 +1,21 @@
+{
+  "name": "Timer",
+  "short_name": "Timer", 
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "start_url": ".",
+  "scope": ".",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNjQiIGN5PSI2NCIgcj0iNjQiIGZpbGw9IiNmZmYiLz48dGV4dCB4PSI2NCIgeT0iNjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMwMDAwMDAiPjU6MjM8L3RleHQ+PC9zdmc+",
+      "sizes": "128x128",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjU2IiBjeT0iMjU2IiByPSIyNTYiIGZpbGw9IiNmZmYiLz48dGV4dCB4PSIyNTYiIHk9IjI1NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzAwMDAwMCIgZm9udC1zaXplPSI2NCI+NToyMzwvdGV4dD48L3N2Zz4=",
+      "sizes": "512x512", 
+      "type": "image/svg+xml"
+    }
+  ]
+}
