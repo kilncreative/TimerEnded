@@ -13,7 +13,7 @@ type AlarmOption = '5 times' | '10 times' | 'Until Canceled';
 
 export default function Timer() {
   const [state, setState] = useState<TimerState>('setup');
-  const [selectedTime, setSelectedTime] = useState<TimeValue>({ hours: 0, minutes: 5, seconds: 0 });
+  const [selectedTime, setSelectedTime] = useState<TimeValue>({ hours: 0, minutes: 0, seconds: 0 });
   const [alarmOption, setAlarmOption] = useState<AlarmOption>('10 times');
   const [remainingTime, setRemainingTime] = useState<number>(0);
   const [expiredAt, setExpiredAt] = useState<Date | null>(null);

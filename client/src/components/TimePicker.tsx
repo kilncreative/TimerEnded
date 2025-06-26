@@ -124,48 +124,62 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
     let isDragging = false;
     let dragStartY = 0;
     let dragStartScroll = 0;
+    let hasDragged = false;
 
     const handleMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return; // Only handle left mouse button
       isDragging = true;
+      hasDragged = false;
       dragStartY = e.clientY;
       dragStartScroll = picker.scrollTop;
       picker.style.cursor = 'grabbing';
       e.preventDefault();
+      e.stopPropagation();
     };
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
       e.preventDefault();
+      e.stopPropagation();
       
       const deltaY = e.clientY - dragStartY;
       const newScroll = dragStartScroll - deltaY;
-      picker.scrollTop = newScroll;
+      picker.scrollTop = Math.max(0, newScroll);
+      hasDragged = true;
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (e: MouseEvent) => {
       if (isDragging) {
         isDragging = false;
-        picker.style.cursor = 'pointer';
-        // Trigger snap after drag ends
-        setTimeout(snapToNearest, 50);
+        picker.style.cursor = 'grab';
+        
+        if (hasDragged) {
+          // Trigger snap after drag ends
+          setTimeout(snapToNearest, 50);
+          e.preventDefault();
+          e.stopPropagation();
+        }
       }
     };
 
-    const handleMouseLeave = () => {
-      if (isDragging) {
-        isDragging = false;
-        picker.style.cursor = 'pointer';
-        setTimeout(snapToNearest, 50);
+    // Prevent click events when dragging
+    const handleClickWithDrag = (e: MouseEvent) => {
+      if (hasDragged) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
       }
+      handleClick(e);
     };
 
     picker.addEventListener('scroll', handleScroll);
     picker.addEventListener('wheel', handleWheel, { passive: false });
-    picker.addEventListener('click', handleClick);
+    picker.addEventListener('click', handleClickWithDrag);
     picker.addEventListener('mousedown', handleMouseDown);
-    picker.addEventListener('mousemove', handleMouseMove);
-    picker.addEventListener('mouseup', handleMouseUp);
-    picker.addEventListener('mouseleave', handleMouseLeave);
+    
+    // Add mouse move and up to document to handle dragging outside the element
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
     
     // Initial selection update - don't change state on first load
     setTimeout(() => updatePickerSelection(picker, type, false), 100);
@@ -175,9 +189,8 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
       picker.removeEventListener('wheel', handleWheel);
       picker.removeEventListener('click', handleClick);
       picker.removeEventListener('mousedown', handleMouseDown);
-      picker.removeEventListener('mousemove', handleMouseMove);
-      picker.removeEventListener('mouseup', handleMouseUp);
-      picker.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
       clearTimeout(scrollTimeout);
     };
   };
