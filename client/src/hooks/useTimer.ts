@@ -65,7 +65,7 @@ export function useTimer() {
           if (alarmRepeat === 'infinite') {
             const playRepeatedAlarm = () => {
               playAlarm();
-              alarmIntervalRef.current = setTimeout(playRepeatedAlarm, 2000);
+              alarmIntervalRef.current = setTimeout(playRepeatedAlarm, 1500);
             };
             playRepeatedAlarm();
           } else {
@@ -75,7 +75,9 @@ export function useTimer() {
               if (currentRepeat < repeatCount) {
                 playAlarm();
                 currentRepeat++;
-                alarmIntervalRef.current = setTimeout(playLimitedAlarm, 2000);
+                if (currentRepeat < repeatCount) {
+                  alarmIntervalRef.current = setTimeout(playLimitedAlarm, 1500);
+                }
               }
             };
             playLimitedAlarm();
@@ -140,6 +142,13 @@ export function useTimer() {
     setRemainingTime(0);
   };
 
+  const stopAlarm = () => {
+    if (alarmIntervalRef.current) {
+      clearTimeout(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+  };
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -163,6 +172,7 @@ export function useTimer() {
     startTimer,
     pauseTimer,
     stopTimer,
-    resetTimer
+    resetTimer,
+    stopAlarm
   };
 }

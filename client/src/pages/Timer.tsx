@@ -9,6 +9,17 @@ export default function Timer() {
   const [alarmRepeat, setAlarmRepeat] = useState('10');
   const [showAlarmDropdown, setShowAlarmDropdown] = useState(false);
 
+  const alarmOptions = [
+    { value: '5', label: '5 times' },
+    { value: '10', label: '10 times' },
+    { value: 'infinite', label: 'Until Canceled' }
+  ];
+
+  const getAlarmLabel = () => {
+    const option = alarmOptions.find(opt => opt.value === alarmRepeat);
+    return option?.label || '10 times';
+  };
+
 
 
 
@@ -21,7 +32,8 @@ export default function Timer() {
     startTimer,
     pauseTimer,
     stopTimer,
-    resetTimer
+    resetTimer,
+    stopAlarm
   } = useTimer();
 
   const totalSeconds = hours * 3600 + minutes * 60 + seconds;
@@ -95,14 +107,6 @@ export default function Timer() {
     }
   };
 
-  const alarmOptions = [
-    { value: '10', label: '10 times' },
-    { value: '20', label: '20 times' },
-    { value: 'infinite', label: 'Until Stopped' }
-  ];
-
-  const selectedAlarmOption = alarmOptions.find(option => option.value === alarmRepeat);
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -163,7 +167,7 @@ export default function Timer() {
               <span className="text-white font-medium">Alarm</span>
               <div className="flex items-center space-x-2">
                 <span className="text-ios-light-gray">
-                  {selectedAlarmOption?.label}
+                  {getAlarmLabel()}
                 </span>
                 <svg 
                   className={`w-4 h-4 text-ios-light-gray transform transition-transform ${showAlarmDropdown ? 'rotate-180' : ''}`}
@@ -176,17 +180,26 @@ export default function Timer() {
             
             {/* Alarm Dropdown */}
             {showAlarmDropdown && (
-              <div className="absolute top-full left-0 right-0 bg-ios-dark-gray rounded-2xl mt-2 overflow-hidden z-50">
+              <div className="absolute top-full left-0 right-0 bg-ios-dark-gray rounded-2xl mt-2 overflow-hidden z-50 border border-gray-600">
                 {alarmOptions.map((option, index) => (
                   <button 
                     key={option.value}
-                    className={`w-full p-4 text-left text-white hover:bg-gray-700 transition-colors ${index === alarmOptions.length - 1 ? 'border-t border-gray-600' : ''}`}
+                    className={`w-full p-4 text-left text-white hover:bg-gray-700 transition-colors ${
+                      alarmRepeat === option.value ? 'bg-gray-700' : ''
+                    } ${index < alarmOptions.length - 1 ? 'border-b border-gray-600' : ''}`}
                     onClick={() => {
                       setAlarmRepeat(option.value);
                       setShowAlarmDropdown(false);
                     }}
                   >
-                    {option.label}
+                    <div className="flex items-center justify-between">
+                      <span>{option.label}</span>
+                      {alarmRepeat === option.value && (
+                        <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -248,12 +261,21 @@ export default function Timer() {
               </div>
             </div>
             
-            <button 
-              className="bg-ios-green text-white px-8 py-3 rounded-xl font-medium text-lg transition-transform duration-75 active:scale-95"
-              onClick={resetTimer}
-            >
-              Reset
-            </button>
+            <div className="flex flex-col space-y-4">
+              <button 
+                className="bg-ios-red text-white px-8 py-3 rounded-xl font-medium text-lg transition-transform duration-75 active:scale-95"
+                onClick={stopAlarm}
+              >
+                Stop Alarm
+              </button>
+              
+              <button 
+                className="bg-ios-green text-white px-8 py-3 rounded-xl font-medium text-lg transition-transform duration-75 active:scale-95"
+                onClick={resetTimer}
+              >
+                Reset
+              </button>
+            </div>
           </div>
         </div>
       </div>
