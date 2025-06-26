@@ -12,12 +12,11 @@ interface TimerPickerProps {
   selectedTime: TimeValue;
   onTimeChange: (time: TimeValue) => void;
   onStart: () => void;
-  onCancel: () => void;
   alarmOption: AlarmOption;
   onAlarmOptionChange: (option: AlarmOption) => void;
 }
 
-export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCancel, alarmOption, onAlarmOptionChange }: TimerPickerProps) {
+export default function TimerPicker({ selectedTime, onTimeChange, onStart, alarmOption, onAlarmOptionChange }: TimerPickerProps) {
   const hoursRef = useRef<HTMLDivElement>(null);
   const minutesRef = useRef<HTMLDivElement>(null);
   const secondsRef = useRef<HTMLDivElement>(null);
@@ -53,7 +52,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
     if (!ref.current) return;
 
     const picker = ref.current;
-    const itemHeight = 44; // Height of each picker item
+    const itemHeight = 44;
     
     const scrollToValue = (value: number) => {
       const scrollTop = value * itemHeight;
@@ -93,13 +92,89 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
       }
     };
 
+    // Desktop mouse wheel support
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 1 : -1;
+      const currentScroll = picker.scrollTop;
+      const newScroll = currentScroll + (delta * itemHeight);
+      picker.scrollTop = Math.max(0, newScroll);
+    };
+
+    // Desktop drag support
+    let isDragging = false;
+    let startY = 0;
+    let startScrollTop = 0;
+    let hasMoved = false;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      startY = e.clientY;
+      startScrollTop = picker.scrollTop;
+      hasMoved = false;
+      picker.style.cursor = 'grabbing';
+      e.preventDefault();
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      
+      const deltaY = startY - e.clientY;
+      const newScrollTop = startScrollTop + deltaY;
+      picker.scrollTop = Math.max(0, newScrollTop);
+      hasMoved = true;
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging) {
+        isDragging = false;
+        picker.style.cursor = 'grab';
+        if (hasMoved) {
+          setTimeout(snapToNearest, 50);
+        }
+      }
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      if (hasMoved) {
+        e.preventDefault();
+        return;
+      }
+      
+      const rect = picker.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const centerY = picker.offsetHeight / 2;
+      const offset = y - centerY;
+      const itemsToMove = Math.round(offset / itemHeight);
+      
+      if (itemsToMove !== 0) {
+        const currentScroll = picker.scrollTop;
+        const newScroll = currentScroll + (itemsToMove * itemHeight);
+        picker.scrollTo({
+          top: Math.max(0, newScroll),
+          behavior: 'smooth'
+        });
+      }
+    };
+
     picker.addEventListener('scroll', handleScroll);
+    picker.addEventListener('wheel', handleWheel, { passive: false });
+    picker.addEventListener('mousedown', handleMouseDown);
+    picker.addEventListener('click', handleClick);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
     
-    // Initial selection update - don't change state on first load
+    // Initial selection update
     setTimeout(() => updatePickerSelection(picker, type, false), 100);
 
     return () => {
       picker.removeEventListener('scroll', handleScroll);
+      picker.removeEventListener('wheel', handleWheel);
+      picker.removeEventListener('mousedown', handleMouseDown);
+      picker.removeEventListener('click', handleClick);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
       clearTimeout(scrollTimeout);
     };
   };
@@ -164,18 +239,12 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
       </div>
 
       {/* Control Buttons */}
-      <div className="flex justify-center space-x-4">
-        <button
-          onClick={onCancel}
-          className="w-20 h-20 rounded-full flex items-center justify-center text-lg font-semibold transition-all duration-200 active:scale-95 bg-ios-gray text-white"
-        >
-          Cancel
-        </button>
-        
+      <div className="flex justify-center">
         <button
           onClick={onStart}
           disabled={!canStart}
-          className="w-20 h-20 rounded-full flex items-center justify-center text-lg font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 bg-ios-green text-white"
+          className="w-20 h-20 rounded-full flex items-center justify-center text-lg font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50"
+          style={{ backgroundColor: canStart ? '#30D158' : '#48484A', color: 'white' }}
         >
           Start
         </button>
