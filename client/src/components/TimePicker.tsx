@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface TimePickerProps {
   hours: number;
@@ -17,137 +17,135 @@ export default function TimePicker({
   onMinutesChange, 
   onSecondsChange 
 }: TimePickerProps) {
-  const [isDragging, setIsDragging] = useState<string | null>(null);
-  const [startY, setStartY] = useState(0);
-  const [startValue, setStartValue] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
+  const hoursRef = useRef<HTMLDivElement>(null);
+  const minutesRef = useRef<HTMLDivElement>(null);
+  const secondsRef = useRef<HTMLDivElement>(null);
 
   const itemHeight = 44;
 
-  const createColumn = (
+  const createScrollableColumn = (
     value: number, 
     max: number, 
-    onChange: (value: number) => void,
-    columnId: string
+    onChange: (value: number) => void, 
+    ref: React.RefObject<HTMLDivElement>
   ) => {
-    const visibleItems = [];
-    const currentDragOffset = isDragging === columnId ? dragOffset : 0;
+    const items = [];
     
-    // Show 5 items for smooth scrolling effect
-    for (let i = -2; i <= 2; i++) {
-      const itemValue = (value + i + max) % max;
-      const isCenter = i === 0;
-      const distance = Math.abs(i);
-      
-      visibleItems.push(
+    // Create many repeating items for infinite scroll effect
+    const totalItems = max * 10; // 10 repetitions for smooth infinite scroll
+    
+    for (let i = 0; i < totalItems; i++) {
+      const itemValue = i % max;
+      items.push(
         <div 
-          key={`${itemValue}-${i}`}
-          className={`picker-item ${isCenter ? 'selected' : ''}`}
-          style={{
-            opacity: isCenter ? 1 : Math.max(0.1, 0.6 - (distance * 0.3)),
-            fontWeight: isCenter ? 600 : 400,
-            transform: `translateY(${(i * itemHeight) + currentDragOffset}px)`,
-            position: 'absolute',
-            top: '50%',
-            left: 0,
-            right: 0,
-            marginTop: `-${itemHeight / 2}px`,
-            transition: isDragging === columnId ? 'none' : 'all 0.3s ease-out'
-          }}
+          key={i}
+          className="scroll-item"
+          data-value={itemValue}
         >
           {itemValue.toString().padStart(2, '0')}
         </div>
       );
     }
 
-    const handleMouseDown = (e: React.MouseEvent) => {
-      e.preventDefault();
-      setIsDragging(columnId);
-      setStartY(e.clientY);
-      setStartValue(value);
+    let isUserScrolling = false;
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      if (!ref.current) return;
+      
+      clearTimeout(scrollTimeout);
+      isUserScrolling = true;
+      
+      scrollTimeout = setTimeout(() => {
+        if (!ref.current) return;
+        
+        const scrollTop = ref.current.scrollTop;
+        const containerHeight = ref.current.clientHeight;
+        const centerPoint = scrollTop + (containerHeight / 2);
+        const itemIndex = Math.round(centerPoint / itemHeight);
+        const newValue = itemIndex % max;
+        
+        if (newValue !== value) {
+          onChange(newValue);
+        }
+        
+        // Snap to center
+        const targetScrollTop = (itemIndex * itemHeight) - (containerHeight / 2) + (itemHeight / 2);
+        ref.current.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth'
+        });
+        
+        isUserScrolling = false;
+      }, 100);
     };
 
     const handleWheel = (e: React.WheelEvent) => {
       e.preventDefault();
-      const delta = e.deltaY > 0 ? -1 : 1;
+      if (!ref.current) return;
+      
+      const delta = e.deltaY > 0 ? 1 : -1;
       const newValue = (value + delta + max) % max;
       onChange(newValue);
     };
 
-    const handleClick = (e: React.MouseEvent) => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const clickY = e.clientY - rect.top;
-      const centerY = rect.height / 2;
-      
-      if (clickY < centerY - itemHeight / 2) {
-        // Clicked on top item
-        const newValue = (value - 1 + max) % max;
-        onChange(newValue);
-      } else if (clickY > centerY + itemHeight / 2) {
-        // Clicked on bottom item
-        const newValue = (value + 1) % max;
-        onChange(newValue);
-      }
-    };
-
     return (
       <div 
-        className="picker-column"
-        onMouseDown={handleMouseDown}
+        className="scroll-column"
+        ref={ref}
+        onScroll={handleScroll}
         onWheel={handleWheel}
-        onClick={handleClick}
-        style={{ cursor: isDragging === columnId ? 'grabbing' : 'grab' }}
       >
-        {visibleItems}
+        <div className="scroll-spacer"></div>
+        {items}
+        <div className="scroll-spacer"></div>
       </div>
     );
   };
 
-  // Global mouse events for dragging
+  const scrollToValue = (ref: React.RefObject<HTMLDivElement>, value: number, max: number) => {
+    if (!ref.current) return;
+    
+    // Find middle repetition and scroll to it
+    const middleRepetition = 5; // Use middle of 10 repetitions
+    const targetIndex = (middleRepetition * max) + value;
+    const containerHeight = ref.current.clientHeight;
+    const targetScrollTop = (targetIndex * itemHeight) - (containerHeight / 2) + (itemHeight / 2);
+    
+    ref.current.scrollTop = targetScrollTop;
+  };
+
+  // Initialize positions
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
+    const timer = setTimeout(() => {
+      scrollToValue(hoursRef, hours, 24);
+      scrollToValue(minutesRef, minutes, 60);
+      scrollToValue(secondsRef, seconds, 60);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
-      const deltaY = e.clientY - startY;
-      setDragOffset(deltaY);
-      
-      const itemsMoved = Math.round(-deltaY / itemHeight);
-      
-      if (isDragging === 'hours') {
-        const newValue = (startValue - itemsMoved + 24) % 24;
-        if (newValue !== hours) onHoursChange(newValue);
-      } else if (isDragging === 'minutes') {
-        const newValue = (startValue - itemsMoved + 60) % 60;
-        if (newValue !== minutes) onMinutesChange(newValue);
-      } else if (isDragging === 'seconds') {
-        const newValue = (startValue - itemsMoved + 60) % 60;
-        if (newValue !== seconds) onSecondsChange(newValue);
-      }
-    };
+  // Update positions when values change
+  useEffect(() => {
+    scrollToValue(hoursRef, hours, 24);
+  }, [hours]);
 
-    const handleMouseUp = () => {
-      setIsDragging(null);
-      setDragOffset(0);
-    };
+  useEffect(() => {
+    scrollToValue(minutesRef, minutes, 60);
+  }, [minutes]);
 
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, startY, startValue, hours, minutes, seconds, onHoursChange, onMinutesChange, onSecondsChange]);
+  useEffect(() => {
+    scrollToValue(secondsRef, seconds, 60);
+  }, [seconds]);
 
   return (
     <div className="picker-container">
       <div className="picker-overlay"></div>
       <div className="grid grid-cols-3 h-full">
-        {createColumn(hours, 24, onHoursChange, 'hours')}
-        {createColumn(minutes, 60, onMinutesChange, 'minutes')}
-        {createColumn(seconds, 60, onSecondsChange, 'seconds')}
+        {createScrollableColumn(hours, 24, onHoursChange, hoursRef)}
+        {createScrollableColumn(minutes, 60, onMinutesChange, minutesRef)}
+        {createScrollableColumn(seconds, 60, onSecondsChange, secondsRef)}
       </div>
     </div>
   );
