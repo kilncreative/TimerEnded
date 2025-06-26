@@ -7,9 +7,7 @@ This timer app is configured for easy deployment to GitHub Pages with proper Con
 1. **Fork/Clone** this repository to your GitHub account
 2. **Enable GitHub Pages** in your repository settings:
    - Go to Settings → Pages
-   - Source: Deploy from a branch
-   - Branch: gh-pages
-   - Folder: / (root)
+   - Source: GitHub Actions
 3. **Push to main branch** - deployment happens automatically
 
 ## Deployment Process
@@ -18,7 +16,7 @@ The app uses GitHub Actions for automatic deployment:
 
 1. **Triggers**: Push to main branch
 2. **Build**: Uses `vite.config.github.ts` for frontend-only build
-3. **Deploy**: Publishes to `gh-pages` branch
+3. **Deploy**: Uses GitHub Actions to deploy directly to GitHub Pages
 4. **Access**: Available at `https://yourusername.github.io/your-repo-name`
 
 ## Manual Build (Optional)
@@ -68,9 +66,9 @@ The app is configured as a Progressive Web App with:
 ## Repository Settings
 
 Ensure your repository has:
-- **GitHub Pages enabled** (Settings → Pages)
+- **GitHub Pages enabled** with source set to "GitHub Actions" (Settings → Pages)
 - **Actions enabled** (Settings → Actions)
-- **Branch protection off** for `gh-pages` branch (to allow auto-deployment)
+- **Pages permissions** enabled for Actions (this is automatic with "GitHub Actions" source)
 
 ## Troubleshooting
 
