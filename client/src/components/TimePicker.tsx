@@ -93,13 +93,44 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
       }
     };
 
+    // Desktop mouse wheel support
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 1 : -1;
+      const currentScroll = picker.scrollTop;
+      const newScroll = currentScroll + (delta * itemHeight);
+      picker.scrollTop = newScroll;
+    };
+
+    // Desktop click support
+    const handleClick = (e: MouseEvent) => {
+      const rect = picker.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const centerY = picker.offsetHeight / 2;
+      const offset = y - centerY;
+      const itemsToMove = Math.round(offset / itemHeight);
+      
+      if (itemsToMove !== 0) {
+        const currentScroll = picker.scrollTop;
+        const newScroll = currentScroll + (itemsToMove * itemHeight);
+        picker.scrollTo({
+          top: newScroll,
+          behavior: 'smooth'
+        });
+      }
+    };
+
     picker.addEventListener('scroll', handleScroll);
+    picker.addEventListener('wheel', handleWheel, { passive: false });
+    picker.addEventListener('click', handleClick);
     
     // Initial selection update - don't change state on first load
     setTimeout(() => updatePickerSelection(picker, type, false), 100);
 
     return () => {
       picker.removeEventListener('scroll', handleScroll);
+      picker.removeEventListener('wheel', handleWheel);
+      picker.removeEventListener('click', handleClick);
       clearTimeout(scrollTimeout);
     };
   };
@@ -119,7 +150,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
   const canStart = selectedTime.hours > 0 || selectedTime.minutes > 0 || selectedTime.seconds > 0;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-sm mx-auto space-y-6">
       {/* Time Picker Wheels */}
       <div className="timer-picker">
         <div className="picker-headers">
