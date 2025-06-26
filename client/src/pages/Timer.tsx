@@ -1,286 +1,317 @@
-import { useState, useEffect } from 'react';
-import TimePicker from '@/components/TimePicker';
-import { useTimer } from '@/hooks/useTimer';
+import { useState, useEffect, useRef } from 'react';
+import TimerPicker from '@/components/TimerPicker';
+
+type TimerState = 'setup' | 'active' | 'paused' | 'expired';
+
+interface TimeValue {
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+type AlarmOption = '5 times' | '10 times' | 'Until Canceled';
 
 export default function Timer() {
-  const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(0);
-  const [seconds, setSeconds] = useState(0);
-  const [alarmRepeat, setAlarmRepeat] = useState('10');
-  const [showAlarmDropdown, setShowAlarmDropdown] = useState(false);
+  const [state, setState] = useState<TimerState>('setup');
+  const [selectedTime, setSelectedTime] = useState<TimeValue>({ hours: 0, minutes: 5, seconds: 0 });
+  const [alarmOption, setAlarmOption] = useState<AlarmOption>('10 times');
+  const [remainingTime, setRemainingTime] = useState<number>(0);
+  const [expiredAt, setExpiredAt] = useState<Date | null>(null);
+  const [elapsedSinceExpired, setElapsedSinceExpired] = useState<number>(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const expiredIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const alarmOptions = [
-    { value: '5', label: '5 times' },
-    { value: '10', label: '10 times' },
-    { value: 'infinite', label: 'Until Canceled' }
-  ];
-
-  const getAlarmLabel = () => {
-    const option = alarmOptions.find(opt => opt.value === alarmRepeat);
-    return option?.label || '10 times';
-  };
-
-
-
-
-
-  const {
-    currentScreen,
-    remainingTime,
-    elapsedTime,
-    originalDuration,
-    startTimer,
-    pauseTimer,
-    stopTimer,
-    resetTimer,
-    stopAlarm
-  } = useTimer();
-
-  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-  const isValidTime = totalSeconds > 0;
-
-  const formatCurrentTime = () => {
-    if (totalSeconds === 0) {
-      return '0 sec';
-    } else if (totalSeconds < 60) {
-      return `${totalSeconds} sec`;
-    } else if (totalSeconds < 3600) {
-      const mins = Math.floor(totalSeconds / 60);
-      const secs = totalSeconds % 60;
-      return secs > 0 ? `${mins} min ${secs} sec` : `${mins} min`;
-    } else {
-      const hrs = Math.floor(totalSeconds / 3600);
-      const mins = Math.floor((totalSeconds % 3600) / 60);
-      const secs = totalSeconds % 60;
-      let display = `${hrs} hr`;
-      if (mins > 0) display += ` ${mins} min`;
-      if (secs > 0) display += ` ${secs} sec`;
-      return display;
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const formatElapsedTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSecs = seconds % 60;
-    
-    let result = '';
-    if (hours > 0) {
-      result += `${hours} hour${hours !== 1 ? 's' : ''}`;
-      if (minutes > 0 || remainingSecs > 0) result += ', ';
-    }
-    if (minutes > 0) {
-      result += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-      if (remainingSecs > 0) result += ' and ';
-    }
-    if (remainingSecs > 0 || (hours === 0 && minutes === 0)) {
-      result += `${remainingSecs} second${remainingSecs !== 1 ? 's' : ''}`;
-    }
-    return result + ' ago';
-  };
-
-  const formatOriginalDuration = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSecs = seconds % 60;
-    
-    if (hours > 0) {
-      let result = `${hours} hour${hours !== 1 ? 's' : ''}`;
-      if (minutes > 0) result += ` ${minutes} minute${minutes !== 1 ? 's' : ''}`;
-      return result;
-    } else if (minutes > 0) {
-      return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-    } else {
-      return `${remainingSecs} second${remainingSecs !== 1 ? 's' : ''}`;
-    }
-  };
-
-  const handleStart = () => {
-    if (isValidTime) {
-      startTimer(totalSeconds, alarmRepeat);
-    }
-  };
-
-  // Close dropdown when clicking outside
+  // Initialize audio alarm system
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      if (!target.closest('.alarm-container')) {
-        setShowAlarmDropdown(false);
+    audioRef.current = new Audio();
+    audioRef.current.volume = 0.8;
+    
+    let alarmIntervalRef: NodeJS.Timeout | null = null;
+    let alarmCount = 0;
+    
+    const createSingleBeep = () => {
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator1 = audioContext.createOscillator();
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator1.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator2.frequency.setValueAtTime(1000, audioContext.currentTime);
+        
+        oscillator1.type = 'sine';
+        oscillator2.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator1.start(audioContext.currentTime);
+        oscillator2.start(audioContext.currentTime);
+        oscillator1.stop(audioContext.currentTime + 0.3);
+        oscillator2.stop(audioContext.currentTime + 0.3);
+      } catch (error) {
+        console.warn('Web Audio API not supported');
       }
     };
+    
+    const createAlarmSound = () => {
+      alarmCount = 0;
+      createSingleBeep();
+      alarmCount++;
+      
+      const maxBeeps = alarmOption === '5 times' ? 5 : alarmOption === '10 times' ? 10 : Infinity;
+      
+      alarmIntervalRef = setInterval(() => {
+        if (alarmCount < maxBeeps) {
+          createSingleBeep();
+          alarmCount++;
+        } else if (alarmOption !== 'Until Canceled') {
+          if (alarmIntervalRef) {
+            clearInterval(alarmIntervalRef);
+            alarmIntervalRef = null;
+          }
+        }
+      }, 500);
+    };
+    
+    const stopAlarm = () => {
+      if (alarmIntervalRef) {
+        clearInterval(alarmIntervalRef);
+        alarmIntervalRef = null;
+        alarmCount = 0;
+      }
+    };
+    
+    if (audioRef.current) {
+      const originalPlay = audioRef.current.play.bind(audioRef.current);
+      audioRef.current.play = () => {
+        createAlarmSound();
+        return originalPlay().catch(() => createAlarmSound());
+      };
+      
+      (audioRef.current as any).stopAlarm = stopAlarm;
+    }
+    
+    return () => {
+      stopAlarm();
+    };
+  }, [alarmOption]);
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+  // Timer countdown logic
+  useEffect(() => {
+    if (state === 'active' && remainingTime > 0) {
+      intervalRef.current = setInterval(() => {
+        setRemainingTime(prev => {
+          if (prev <= 1) {
+            setState('expired');
+            setExpiredAt(new Date());
+            if (audioRef.current) {
+              audioRef.current.play();
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
 
-  if (currentScreen === 'setup') {
-    return (
-      <div className="timer-app">
-        <div className="flex-1 flex flex-col justify-center items-center px-5 py-8 space-y-8">
-          {/* Current Timer Display */}
-          <div className="text-center">
-            <div className="text-3xl font-light text-white">
-              {formatCurrentTime()}
-            </div>
-          </div>
-          
-          {/* Time Picker */}
-          <div className="timer-picker w-full max-w-md">
-            <div className="picker-headers grid grid-cols-3 text-center">
-              <div className="text-ios-light-gray text-sm font-normal">hours</div>
-              <div className="text-ios-light-gray text-sm font-normal">min</div>
-              <div className="text-ios-light-gray text-sm font-normal">sec</div>
-            </div>
-            
-            <TimePicker 
-              hours={hours}
-              minutes={minutes}
-              seconds={seconds}
-              onHoursChange={setHours}
-              onMinutesChange={setMinutes}
-              onSecondsChange={setSeconds}
-            />
-          </div>
-          
-          {/* Start Button */}
-          <button 
-            className={`timer-button ${isValidTime ? 'timer-button-green' : 'timer-button-disabled'}`}
-            onClick={handleStart}
-            disabled={!isValidTime}
-          >
-            Start
-          </button>
-          
-          {/* Alarm Settings */}
-          <div className="alarm-container timer-picker w-full max-w-sm relative">
-            <button 
-              className="w-full p-4 flex items-center justify-between text-left"
-              onClick={() => setShowAlarmDropdown(!showAlarmDropdown)}
-            >
-              <span className="text-white font-medium">Alarm</span>
-              <div className="flex items-center space-x-2">
-                <span className="text-ios-light-gray">
-                  {getAlarmLabel()}
-                </span>
-                <svg 
-                  className={`w-4 h-4 text-ios-light-gray transform transition-transform ${showAlarmDropdown ? 'rotate-180' : ''}`}
-                  viewBox="0 0 16 16"
-                >
-                  <path fill="currentColor" d="M8 12l-4-4h8l-4 4z"/>
-                </svg>
-              </div>
-            </button>
-            
-            {/* Alarm Dropdown */}
-            {showAlarmDropdown && (
-              <div className="absolute top-full left-0 right-0 bg-ios-dark-gray rounded-2xl mt-2 overflow-hidden z-50 border border-gray-600">
-                {alarmOptions.map((option, index) => (
-                  <button 
-                    key={option.value}
-                    className={`w-full p-4 text-left text-white hover:bg-gray-700 transition-colors ${
-                      alarmRepeat === option.value ? 'bg-gray-700' : ''
-                    } ${index < alarmOptions.length - 1 ? 'border-b border-gray-600' : ''}`}
-                    onClick={() => {
-                      setAlarmRepeat(option.value);
-                      setShowAlarmDropdown(false);
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{option.label}</span>
-                      {alarmRepeat === option.value && (
-                        <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [state, remainingTime]);
 
-  if (currentScreen === 'running') {
-    return (
-      <div className="timer-app">
+  // Track elapsed time since expiration
+  useEffect(() => {
+    if (state === 'expired' && expiredAt) {
+      expiredIntervalRef.current = setInterval(() => {
+        const now = new Date();
+        const elapsed = Math.floor((now.getTime() - expiredAt.getTime()) / 1000);
+        setElapsedSinceExpired(elapsed);
+      }, 1000);
+    } else {
+      if (expiredIntervalRef.current) {
+        clearInterval(expiredIntervalRef.current);
+        expiredIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (expiredIntervalRef.current) {
+        clearInterval(expiredIntervalRef.current);
+      }
+    };
+  }, [state, expiredAt]);
+
+  const handleStart = () => {
+    const totalSeconds = selectedTime.hours * 3600 + selectedTime.minutes * 60 + selectedTime.seconds;
+    setRemainingTime(totalSeconds);
+    setState('active');
+  };
+
+  const handlePause = () => {
+    setState('paused');
+  };
+
+  const handleResume = () => {
+    setState('active');
+  };
+
+  const handleStop = () => {
+    setState('setup');
+    setRemainingTime(0);
+    setExpiredAt(null);
+    setElapsedSinceExpired(0);
+    if (audioRef.current && (audioRef.current as any).stopAlarm) {
+      (audioRef.current as any).stopAlarm();
+    }
+  };
+
+  const handleReset = () => {
+    setState('setup');
+    setRemainingTime(0);
+    setExpiredAt(null);
+    setElapsedSinceExpired(0);
+    if (audioRef.current && (audioRef.current as any).stopAlarm) {
+      (audioRef.current as any).stopAlarm();
+    }
+  };
+
+  const formatTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatElapsedTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours} hour${hours !== 1 ? 's' : ''}, ${minutes} minute${minutes !== 1 ? 's' : ''}, and ${secs} second${secs !== 1 ? 's' : ''} ago`;
+    } else if (minutes > 0) {
+      return `${minutes} minute${minutes !== 1 ? 's' : ''} and ${secs} second${secs !== 1 ? 's' : ''} ago`;
+    }
+    return `${secs} second${secs !== 1 ? 's' : ''} ago`;
+  };
+
+  const formatOriginalDuration = (): string => {
+    const { hours, minutes, seconds } = selectedTime;
+    const parts = [];
+    
+    if (hours > 0) parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`);
+    if (minutes > 0) parts.push(`${minutes} minute${minutes !== 1 ? 's' : ''}`);
+    if (seconds > 0) parts.push(`${seconds} second${seconds !== 1 ? 's' : ''}`);
+    
+    return parts.join(', ');
+  };
+
+  return (
+    <div className="timer-app">
+      {state === 'setup' && (
         <div className="flex-1 flex flex-col justify-center px-5 py-8">
-          <div className="flex flex-col items-center space-y-12">
-            <div className="text-center">
-              <h1 className="text-2xl font-light mb-2 text-white">Timer</h1>
-            </div>
-            
-            <div className="flex flex-col items-center space-y-8">
-              <div className="timer-display text-white">
+          <TimerPicker
+            selectedTime={selectedTime}
+            onTimeChange={setSelectedTime}
+            onStart={handleStart}
+            onCancel={handleStop}
+            alarmOption={alarmOption}
+            onAlarmOptionChange={setAlarmOption}
+          />
+        </div>
+      )}
+
+      {(state === 'active' || state === 'paused') && (
+        <div className="timer-app">
+          <div className="flex-1 flex flex-col justify-center px-5 py-8">
+            <div className="flex flex-col items-center space-y-8 text-center">
+              <div className="countdown-display text-8xl font-light mb-4 text-white">
                 {formatTime(remainingTime)}
               </div>
-              <div className="text-ios-light-gray text-lg">Timer</div>
-            </div>
-            
-            <div className="flex space-x-8">
-              <button 
-                className="timer-button timer-button-gray"
-                onClick={pauseTimer}
-              >
-                Pause
-              </button>
-              <button 
-                className="timer-button timer-button-red"
-                onClick={stopTimer}
-              >
-                Stop
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (currentScreen === 'completed') {
-    return (
-      <div className="timer-app">
-        <div className="flex-1 flex flex-col justify-center px-5 py-8">
-          <div className="flex flex-col items-center space-y-8 text-center">
-            <div className="space-y-4">
-              <h1 className="text-2xl font-light text-white">Timer Completed</h1>
-              <div className="elapsed-time">
-                <div>Your {formatOriginalDuration(originalDuration)} timer ended:</div>
-                <div className="text-white text-xl font-medium mt-2">
-                  {formatElapsedTime(elapsedTime)}
-                </div>
+              
+              <div className="flex justify-center space-x-4">
+                <button 
+                  className="bg-ios-gray text-white px-8 py-3 rounded-xl font-medium text-lg transition-transform duration-75 active:scale-95"
+                  onClick={handleStop}
+                >
+                  Cancel
+                </button>
+                
+                {state === 'active' ? (
+                  <button 
+                    className="bg-ios-orange text-white px-8 py-3 rounded-xl font-medium text-lg transition-transform duration-75 active:scale-95"
+                    onClick={handlePause}
+                  >
+                    Pause
+                  </button>
+                ) : (
+                  <button 
+                    className="bg-ios-green text-white px-8 py-3 rounded-xl font-medium text-lg transition-transform duration-75 active:scale-95"
+                    onClick={handleResume}
+                  >
+                    Resume
+                  </button>
+                )}
               </div>
             </div>
-            
-            <div className="flex flex-col space-y-4">
-              <button 
-                className="bg-ios-red text-white px-8 py-3 rounded-xl font-medium text-lg transition-transform duration-75 active:scale-95"
-                onClick={stopAlarm}
-              >
-                Stop Alarm
-              </button>
+          </div>
+        </div>
+      )}
+
+      {state === 'expired' && (
+        <div className="timer-app">
+          <div className="flex-1 flex flex-col justify-center px-5 py-8">
+            <div className="flex flex-col items-center space-y-8 text-center">
+              <div className="space-y-4">
+                <h1 className="text-2xl font-light text-white">Timer Completed</h1>
+                <div className="elapsed-time">
+                  <div>Your {formatOriginalDuration()} timer ended:</div>
+                  <div className="text-white text-xl font-medium mt-2">
+                    {formatElapsedTime(elapsedSinceExpired)}
+                  </div>
+                </div>
+              </div>
               
-              <button 
-                className="bg-ios-green text-white px-8 py-3 rounded-xl font-medium text-lg transition-transform duration-75 active:scale-95"
-                onClick={resetTimer}
-              >
-                Reset
-              </button>
+              <div className="flex flex-col space-y-4">
+                <button 
+                  className="bg-ios-red text-white px-8 py-3 rounded-xl font-medium text-lg transition-transform duration-75 active:scale-95"
+                  onClick={() => {
+                    if (audioRef.current && (audioRef.current as any).stopAlarm) {
+                      (audioRef.current as any).stopAlarm();
+                    }
+                  }}
+                >
+                  Stop Alarm
+                </button>
+                
+                <button 
+                  className="bg-ios-green text-white px-8 py-3 rounded-xl font-medium text-lg transition-transform duration-75 active:scale-95"
+                  onClick={handleReset}
+                >
+                  Reset
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return null;
+      )}
+    </div>
+  );
 }

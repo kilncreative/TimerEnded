@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a full-stack timer application built with React, Express, and TypeScript. The application provides an iOS-style timer interface with time picking, countdown functionality, alarm sounds, and elapsed time tracking. It features a modern UI using shadcn/ui components and Tailwind CSS.
+This is a full-stack timer application built with React, Express, and TypeScript. The application provides an iOS-style timer interface with functional scrollable time picking, countdown functionality, alarm sounds, and elapsed time tracking after completion. It features a modern UI using shadcn/ui components and Tailwind CSS, and is fully deployable to GitHub Pages with proper CSP configuration.
 
 ## System Architecture
 
@@ -86,8 +86,10 @@ This is a full-stack timer application built with React, Express, and TypeScript
 
 ## Changelog
 
-Changelog:
-- June 24, 2025. Initial setup
+- June 26, 2025: Added GitHub Pages deployment configuration with CSP headers
+- June 26, 2025: Integrated working TimePicker from successful GitHub repository
+- June 26, 2025: Fixed timer functionality with proper alarm system and elapsed time tracking
+- June 24, 2025: Initial setup
 
 ## User Preferences
 
