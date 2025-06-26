@@ -191,7 +191,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, alarm
   const canStart = selectedTime.hours > 0 || selectedTime.minutes > 0 || selectedTime.seconds > 0;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-sm mx-auto space-y-6">
       {/* Time Picker Wheels */}
       <div className="timer-picker">
         <div className="picker-headers">
