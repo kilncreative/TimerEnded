@@ -78,6 +78,7 @@ This is a full-stack timer application built with React, Express, and TypeScript
 - **Frontend**: Vite builds to dist/public
 - **Backend**: esbuild bundles server to dist/index.js
 - **Start**: `npm run start` runs the production build
+- **GitHub Pages**: `node build-github.js` builds frontend-only for static hosting
 
 ### Replit Configuration
 - **Modules**: nodejs-20, web, postgresql-16
