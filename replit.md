@@ -86,6 +86,7 @@ This is a full-stack timer application built with React, Express, and TypeScript
 
 ## Changelog
 
+- June 26, 2025: Fixed desktop functionality - removed cancel button, added working drag support, restored smooth mouse wheel scrolling
 - June 26, 2025: Added GitHub Pages deployment configuration with CSP headers
 - June 26, 2025: Integrated working TimePicker from successful GitHub repository
 - June 26, 2025: Fixed timer functionality with proper alarm system and elapsed time tracking
