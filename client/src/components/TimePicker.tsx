@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface TimePickerProps {
   hours: number;
@@ -23,95 +23,125 @@ export default function TimePicker({
 
   const itemHeight = 44;
 
-  const createPickerColumn = (value: number, max: number, onChange: (value: number) => void, ref: React.RefObject<HTMLDivElement>) => {
+  const createWheelColumn = (
+    value: number, 
+    max: number, 
+    onChange: (value: number) => void, 
+    ref: React.RefObject<HTMLDivElement>
+  ) => {
     const items = [];
     
-    // Add padding items for smooth scrolling
-    for (let i = -2; i < max + 2; i++) {
-      const displayValue = i < 0 ? '' : i >= max ? '' : i.toString();
-      const isSelected = i === value;
+    // Create enough items for smooth infinite scrolling
+    const repeatCount = 5;
+    const totalItems = max * repeatCount;
+    
+    for (let i = 0; i < totalItems; i++) {
+      const itemValue = i % max;
+      const isSelected = itemValue === value;
       
       items.push(
         <div 
-          key={i} 
+          key={i}
           className={`picker-item ${isSelected ? 'selected' : ''}`}
-          data-value={i}
+          data-value={itemValue}
         >
-          {displayValue}
+          {itemValue.toString().padStart(2, '0')}
         </div>
       );
     }
-    
+
+    const handleWheel = (e: React.WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 1 : -1;
+      const newValue = (value + delta + max) % max;
+      onChange(newValue);
+    };
+
+    let isScrolling = false;
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      if (!ref.current) return;
+      
+      isScrolling = true;
+      clearTimeout(scrollTimeout);
+      
+      scrollTimeout = setTimeout(() => {
+        if (!ref.current) return;
+        
+        const scrollTop = ref.current.scrollTop;
+        const itemIndex = Math.round(scrollTop / itemHeight);
+        const newValue = itemIndex % max;
+        
+        // Snap to position
+        const targetScrollTop = itemIndex * itemHeight;
+        ref.current.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth'
+        });
+        
+        if (newValue !== value) {
+          onChange(newValue);
+        }
+        
+        isScrolling = false;
+      }, 100);
+    };
+
     return (
       <div 
-        className="picker-column" 
+        className="picker-column"
         ref={ref}
-        onWheel={(e) => handleWheel(e, onChange, max, value)}
-        onScroll={(e) => handleScroll(e.currentTarget, onChange, max)}
+        onWheel={handleWheel}
+        onScroll={handleScroll}
       >
         {items}
       </div>
     );
   };
 
-  const handleWheel = (e: React.WheelEvent, onChange: (value: number) => void, max: number, currentValue: number) => {
-    e.preventDefault();
+  const scrollToValue = (ref: React.RefObject<HTMLDivElement>, value: number, max: number) => {
+    if (!ref.current) return;
     
-    const delta = e.deltaY > 0 ? 1 : -1;
-    const newValue = currentValue + delta;
+    // Find the middle occurrence of the value
+    const middleRepeat = Math.floor(5 / 2); // 5 is repeatCount
+    const targetIndex = middleRepeat * max + value;
+    const targetScrollTop = targetIndex * itemHeight - (itemHeight * 2); // Center in view
     
-    if (newValue >= 0 && newValue < max) {
-      onChange(newValue);
-    }
+    ref.current.scrollTop = targetScrollTop;
   };
 
-  const handleScroll = (container: HTMLDivElement, onChange: (value: number) => void, max: number) => {
-    const scrollTop = container.scrollTop;
-    const itemIndex = Math.round(scrollTop / itemHeight);
-    const actualValue = itemIndex - 2; // Account for padding
-    
-    if (actualValue >= 0 && actualValue < max) {
-      onChange(actualValue);
-    }
-  };
-
-  const scrollToValue = (ref: React.RefObject<HTMLDivElement>, value: number) => {
-    if (ref.current) {
-      const targetScroll = (value + 2) * itemHeight; // Add 2 for padding
-      ref.current.scrollTop = targetScroll;
-    }
-  };
-
+  // Initialize scroll positions
   useEffect(() => {
-    // Set initial positions with delay to ensure DOM is ready
     const timer = setTimeout(() => {
-      scrollToValue(hoursRef, hours);
-      scrollToValue(minutesRef, minutes);
-      scrollToValue(secondsRef, seconds);
-    }, 50);
+      scrollToValue(hoursRef, hours, 24);
+      scrollToValue(minutesRef, minutes, 60);
+      scrollToValue(secondsRef, seconds, 60);
+    }, 100);
     
     return () => clearTimeout(timer);
   }, []);
 
+  // Update scroll positions when values change externally
   useEffect(() => {
-    scrollToValue(hoursRef, hours);
+    scrollToValue(hoursRef, hours, 24);
   }, [hours]);
 
   useEffect(() => {
-    scrollToValue(minutesRef, minutes);
+    scrollToValue(minutesRef, minutes, 60);
   }, [minutes]);
 
   useEffect(() => {
-    scrollToValue(secondsRef, seconds);  
+    scrollToValue(secondsRef, seconds, 60);
   }, [seconds]);
 
   return (
     <div className="picker-container">
       <div className="picker-overlay"></div>
       <div className="grid grid-cols-3 h-full">
-        {createPickerColumn(hours, 24, onHoursChange, hoursRef)}
-        {createPickerColumn(minutes, 60, onMinutesChange, minutesRef)}
-        {createPickerColumn(seconds, 60, onSecondsChange, secondsRef)}
+        {createWheelColumn(hours, 24, onHoursChange, hoursRef)}
+        {createWheelColumn(minutes, 60, onMinutesChange, minutesRef)}
+        {createWheelColumn(seconds, 60, onSecondsChange, secondsRef)}
       </div>
     </div>
   );
