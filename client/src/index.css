@@ -79,7 +79,7 @@
   flex-direction: column;
 }
 
-/* iOS Timer Picker - Real Scrolling */
+/* iOS Timer Picker - Working Version */
 .timer-picker {
   background: #1C1C1E;
   border-radius: 16px;
@@ -97,6 +97,13 @@
   border-bottom: 0.5px solid #38383A;
 }
 
+.picker-header {
+  color: #8E8E93;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+}
+
 .picker-container {
   height: 132px;
   overflow: hidden;
@@ -104,29 +111,29 @@
   background: #1C1C1E;
 }
 
-.scroll-column {
+.picker-column {
   height: 132px;
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
   position: relative;
   scroll-behavior: smooth;
-  scroll-snap-type: y mandatory;
+  padding: 44px 0;
 }
 
-.scroll-column::-webkit-scrollbar {
+.picker-column::-webkit-scrollbar {
   display: none;
 }
 
-.scroll-column:nth-child(1) {
+.picker-column:nth-child(1) {
   border-right: 0.5px solid #38383A;
 }
 
-.scroll-column:nth-child(2) {
+.picker-column:nth-child(2) {
   border-right: 0.5px solid #38383A;
 }
 
-.scroll-item {
+.picker-item {
   height: 44px;
   min-height: 44px;
   display: flex;
@@ -140,14 +147,12 @@
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   letter-spacing: -0.2px;
   opacity: 0.3;
-  scroll-snap-align: center;
   transition: opacity 0.2s ease-out;
 }
 
-.scroll-spacer {
-  height: 44px;
-  min-height: 44px;
-  flex-shrink: 0;
+.picker-item.selected {
+  opacity: 1;
+  font-weight: 600;
 }
 
 .picker-overlay {

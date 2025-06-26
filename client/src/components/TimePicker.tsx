@@ -1,151 +1,226 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from "react";
 
-interface TimePickerProps {
+interface TimeValue {
   hours: number;
   minutes: number;
   seconds: number;
-  onHoursChange: (hours: number) => void;
-  onMinutesChange: (minutes: number) => void;
-  onSecondsChange: (seconds: number) => void;
 }
 
-export default function TimePicker({ 
-  hours, 
-  minutes, 
-  seconds, 
-  onHoursChange, 
-  onMinutesChange, 
-  onSecondsChange 
-}: TimePickerProps) {
+type AlarmOption = '5 times' | '10 times' | 'Until Canceled';
+
+interface TimerPickerProps {
+  selectedTime: TimeValue;
+  onTimeChange: (time: TimeValue) => void;
+  onStart: () => void;
+  onCancel: () => void;
+  alarmOption: AlarmOption;
+  onAlarmOptionChange: (option: AlarmOption) => void;
+}
+
+export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCancel, alarmOption, onAlarmOptionChange }: TimerPickerProps) {
   const hoursRef = useRef<HTMLDivElement>(null);
   const minutesRef = useRef<HTMLDivElement>(null);
   const secondsRef = useRef<HTMLDivElement>(null);
+  const [showAlarmDropdown, setShowAlarmDropdown] = useState(false);
+  
+  const alarmOptions: AlarmOption[] = ['5 times', '10 times', 'Until Canceled'];
 
-  const itemHeight = 44;
+  const generateNumbers = (max: number) => Array.from({ length: max }, (_, i) => i);
 
-  const createScrollableColumn = (
-    value: number, 
-    max: number, 
-    onChange: (value: number) => void, 
-    ref: React.RefObject<HTMLDivElement>
-  ) => {
-    const items = [];
+  const updatePickerSelection = (picker: HTMLDivElement, type: 'hours' | 'minutes' | 'seconds', shouldUpdateState = true) => {
+    const itemHeight = 44;
+    const scrollTop = picker.scrollTop;
+    const selectedIndex = Math.round(scrollTop / itemHeight);
     
-    // Create many repeating items for infinite scroll effect
-    const totalItems = max * 10; // 10 repetitions for smooth infinite scroll
+    const items = picker.querySelectorAll('.picker-item');
+    items.forEach((item, index) => {
+      const htmlItem = item as HTMLElement;
+      htmlItem.classList.remove('selected');
+      if (index === selectedIndex) {
+        htmlItem.classList.add('selected');
+      }
+    });
     
-    for (let i = 0; i < totalItems; i++) {
-      const itemValue = i % max;
-      items.push(
-        <div 
-          key={i}
-          className="scroll-item"
-          data-value={itemValue}
-        >
-          {itemValue.toString().padStart(2, '0')}
-        </div>
-      );
+    if (shouldUpdateState && selectedIndex >= 0) {
+      onTimeChange({
+        ...selectedTime,
+        [type]: selectedIndex
+      });
     }
-
-    let isUserScrolling = false;
-    let scrollTimeout: NodeJS.Timeout;
-
-    const handleScroll = () => {
-      if (!ref.current) return;
-      
-      clearTimeout(scrollTimeout);
-      isUserScrolling = true;
-      
-      scrollTimeout = setTimeout(() => {
-        if (!ref.current) return;
-        
-        const scrollTop = ref.current.scrollTop;
-        const containerHeight = ref.current.clientHeight;
-        const centerPoint = scrollTop + (containerHeight / 2);
-        const itemIndex = Math.round(centerPoint / itemHeight);
-        const newValue = itemIndex % max;
-        
-        if (newValue !== value) {
-          onChange(newValue);
-        }
-        
-        // Snap to center
-        const targetScrollTop = (itemIndex * itemHeight) - (containerHeight / 2) + (itemHeight / 2);
-        ref.current.scrollTo({
-          top: targetScrollTop,
-          behavior: 'smooth'
-        });
-        
-        isUserScrolling = false;
-      }, 100);
-    };
-
-    const handleWheel = (e: React.WheelEvent) => {
-      e.preventDefault();
-      if (!ref.current) return;
-      
-      const delta = e.deltaY > 0 ? 1 : -1;
-      const newValue = (value + delta + max) % max;
-      onChange(newValue);
-    };
-
-    return (
-      <div 
-        className="scroll-column"
-        ref={ref}
-        onScroll={handleScroll}
-        onWheel={handleWheel}
-      >
-        <div className="scroll-spacer"></div>
-        {items}
-        <div className="scroll-spacer"></div>
-      </div>
-    );
   };
 
-  const scrollToValue = (ref: React.RefObject<HTMLDivElement>, value: number, max: number) => {
+  const setupPicker = (ref: React.RefObject<HTMLDivElement>, type: 'hours' | 'minutes' | 'seconds') => {
     if (!ref.current) return;
+
+    const picker = ref.current;
+    const itemHeight = 44; // Height of each picker item
     
-    // Find middle repetition and scroll to it
-    const middleRepetition = 5; // Use middle of 10 repetitions
-    const targetIndex = (middleRepetition * max) + value;
-    const containerHeight = ref.current.clientHeight;
-    const targetScrollTop = (targetIndex * itemHeight) - (containerHeight / 2) + (itemHeight / 2);
+    const scrollToValue = (value: number) => {
+      const scrollTop = value * itemHeight;
+      picker.scrollTop = scrollTop;
+    };
+
+    // Set initial scroll position
+    scrollToValue(selectedTime[type]);
+
+    let isSnapping = false;
     
-    ref.current.scrollTop = targetScrollTop;
+    const snapToNearest = () => {
+      if (isSnapping) return;
+      isSnapping = true;
+      
+      const scrollTop = picker.scrollTop;
+      const nearestIndex = Math.round(scrollTop / itemHeight);
+      const targetScrollTop = nearestIndex * itemHeight;
+      
+      picker.scrollTo({
+        top: targetScrollTop,
+        behavior: 'smooth'
+      });
+      
+      setTimeout(() => {
+        isSnapping = false;
+        updatePickerSelection(picker, type);
+      }, 200);
+    };
+
+    let scrollTimeout: NodeJS.Timeout;
+    
+    const handleScroll = () => {
+      if (!isSnapping) {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(snapToNearest, 150);
+      }
+    };
+
+    picker.addEventListener('scroll', handleScroll);
+    
+    // Initial selection update - don't change state on first load
+    setTimeout(() => updatePickerSelection(picker, type, false), 100);
+
+    return () => {
+      picker.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
   };
 
-  // Initialize positions
   useEffect(() => {
-    const timer = setTimeout(() => {
-      scrollToValue(hoursRef, hours, 24);
-      scrollToValue(minutesRef, minutes, 60);
-      scrollToValue(secondsRef, seconds, 60);
-    }, 100);
-    
-    return () => clearTimeout(timer);
+    const cleanupHours = setupPicker(hoursRef, 'hours');
+    const cleanupMinutes = setupPicker(minutesRef, 'minutes');
+    const cleanupSeconds = setupPicker(secondsRef, 'seconds');
+
+    return () => {
+      cleanupHours?.();
+      cleanupMinutes?.();
+      cleanupSeconds?.();
+    };
   }, []);
 
-  // Update positions when values change
-  useEffect(() => {
-    scrollToValue(hoursRef, hours, 24);
-  }, [hours]);
-
-  useEffect(() => {
-    scrollToValue(minutesRef, minutes, 60);
-  }, [minutes]);
-
-  useEffect(() => {
-    scrollToValue(secondsRef, seconds, 60);
-  }, [seconds]);
+  const canStart = selectedTime.hours > 0 || selectedTime.minutes > 0 || selectedTime.seconds > 0;
 
   return (
-    <div className="picker-container">
-      <div className="picker-overlay"></div>
-      <div className="grid grid-cols-3 h-full">
-        {createScrollableColumn(hours, 24, onHoursChange, hoursRef)}
-        {createScrollableColumn(minutes, 60, onMinutesChange, minutesRef)}
-        {createScrollableColumn(seconds, 60, onSecondsChange, secondsRef)}
+    <div className="space-y-6">
+      {/* Time Picker Wheels */}
+      <div className="timer-picker">
+        <div className="picker-headers">
+          <div className="grid grid-cols-3 text-center">
+            <div className="picker-header">hours</div>
+            <div className="picker-header">min</div>
+            <div className="picker-header">sec</div>
+          </div>
+        </div>
+        
+        <div className="picker-container">
+          <div className="picker-overlay"></div>
+          <div className="grid grid-cols-3 h-full">
+            {/* Hours Picker */}
+            <div className="picker-column" ref={hoursRef}>
+              {generateNumbers(24).map((num) => (
+                <div key={num} className="picker-item" data-value={num}>
+                  {num}
+                </div>
+              ))}
+            </div>
+
+            {/* Minutes Picker */}
+            <div className="picker-column" ref={minutesRef}>
+              {generateNumbers(60).map((num) => (
+                <div key={num} className="picker-item" data-value={num}>
+                  {num}
+                </div>
+              ))}
+            </div>
+
+            {/* Seconds Picker */}
+            <div className="picker-column" ref={secondsRef}>
+              {generateNumbers(60).map((num) => (
+                <div key={num} className="picker-item" data-value={num}>
+                  {num}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Control Buttons */}
+      <div className="flex justify-center space-x-4">
+        <button
+          onClick={onCancel}
+          className="w-20 h-20 rounded-full flex items-center justify-center text-lg font-semibold transition-all duration-200 active:scale-95"
+          style={{ backgroundColor: '#48484A', color: 'white' }}
+        >
+          Cancel
+        </button>
+        
+        <button
+          onClick={onStart}
+          disabled={!canStart}
+          className="w-20 h-20 rounded-full flex items-center justify-center text-lg font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50"
+          style={{ backgroundColor: canStart ? '#30D158' : '#48484A', color: 'white' }}
+        >
+          Start
+        </button>
+      </div>
+
+      {/* Timer Options */}
+      <div 
+        className="rounded-2xl px-6 py-4"
+        style={{ backgroundColor: '#1C1C1E' }}
+      >
+        <div className="flex items-center justify-between py-3 relative">
+          <span className="text-white font-medium">When Timer Ends</span>
+          <button
+            onClick={() => setShowAlarmDropdown(!showAlarmDropdown)}
+            className="flex items-center"
+            style={{ color: '#8E8E93' }}
+          >
+            <span>{alarmOption}</span>
+            <span className="ml-2">›</span>
+          </button>
+          
+          {showAlarmDropdown && (
+            <div 
+              className="absolute top-full right-0 mt-2 rounded-2xl py-2 z-50 min-w-[150px]"
+              style={{ backgroundColor: '#2C2C2E' }}
+            >
+              {alarmOptions.map((option) => (
+                <button
+                  key={option}
+                  onClick={() => {
+                    onAlarmOptionChange(option);
+                    setShowAlarmDropdown(false);
+                  }}
+                  className={`w-full px-4 py-2 text-left hover:bg-gray-700 ${
+                    option === alarmOption ? 'text-white' : 'text-gray-400'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
