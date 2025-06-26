@@ -69,7 +69,7 @@ export default function TimePicker({
 
     const handleWheel = (e: React.WheelEvent) => {
       e.preventDefault();
-      const delta = e.deltaY > 0 ? 1 : -1;
+      const delta = e.deltaY > 0 ? -1 : 1;
       const newValue = (value + delta + max) % max;
       onChange(newValue);
     };
@@ -109,9 +109,9 @@ export default function TimePicker({
       if (!isDragging) return;
 
       const deltaY = e.clientY - startY;
-      setDragOffset(-deltaY);
+      setDragOffset(deltaY);
       
-      const itemsMoved = Math.round(deltaY / itemHeight);
+      const itemsMoved = Math.round(-deltaY / itemHeight);
       
       if (isDragging === 'hours') {
         const newValue = (startValue - itemsMoved + 24) % 24;
