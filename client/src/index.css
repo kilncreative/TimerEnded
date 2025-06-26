@@ -79,7 +79,7 @@
   flex-direction: column;
 }
 
-/* iOS Timer Picker - 3 Item Display */
+/* iOS Timer Picker - Drag & Wheel Control */
 .timer-picker {
   background: #1C1C1E;
   border-radius: 16px;
@@ -106,23 +106,17 @@
 
 .picker-column {
   height: 132px;
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   position: relative;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   user-select: none;
-  scroll-behavior: smooth;
   cursor: grab;
+  padding: 0;
 }
 
 .picker-column:active {
   cursor: grabbing;
-}
-
-.picker-column::-webkit-scrollbar {
-  display: none;
 }
 
 .picker-column:nth-child(1) {
@@ -147,7 +141,6 @@
   color: #FFFFFF;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   letter-spacing: -0.2px;
-  opacity: 0.3;
 }
 
 .picker-item.selected {
