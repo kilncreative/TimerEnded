@@ -120,9 +120,52 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
       }
     };
 
+    // Desktop drag support
+    let isDragging = false;
+    let dragStartY = 0;
+    let dragStartScroll = 0;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      dragStartY = e.clientY;
+      dragStartScroll = picker.scrollTop;
+      picker.style.cursor = 'grabbing';
+      e.preventDefault();
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      
+      const deltaY = e.clientY - dragStartY;
+      const newScroll = dragStartScroll - deltaY;
+      picker.scrollTop = newScroll;
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging) {
+        isDragging = false;
+        picker.style.cursor = 'pointer';
+        // Trigger snap after drag ends
+        setTimeout(snapToNearest, 50);
+      }
+    };
+
+    const handleMouseLeave = () => {
+      if (isDragging) {
+        isDragging = false;
+        picker.style.cursor = 'pointer';
+        setTimeout(snapToNearest, 50);
+      }
+    };
+
     picker.addEventListener('scroll', handleScroll);
     picker.addEventListener('wheel', handleWheel, { passive: false });
     picker.addEventListener('click', handleClick);
+    picker.addEventListener('mousedown', handleMouseDown);
+    picker.addEventListener('mousemove', handleMouseMove);
+    picker.addEventListener('mouseup', handleMouseUp);
+    picker.addEventListener('mouseleave', handleMouseLeave);
     
     // Initial selection update - don't change state on first load
     setTimeout(() => updatePickerSelection(picker, type, false), 100);
@@ -131,6 +174,10 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
       picker.removeEventListener('scroll', handleScroll);
       picker.removeEventListener('wheel', handleWheel);
       picker.removeEventListener('click', handleClick);
+      picker.removeEventListener('mousedown', handleMouseDown);
+      picker.removeEventListener('mousemove', handleMouseMove);
+      picker.removeEventListener('mouseup', handleMouseUp);
+      picker.removeEventListener('mouseleave', handleMouseLeave);
       clearTimeout(scrollTimeout);
     };
   };

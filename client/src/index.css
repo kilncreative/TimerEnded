@@ -119,8 +119,12 @@
   position: relative;
   scroll-behavior: smooth;
   padding: 44px 0;
-  cursor: pointer;
+  cursor: grab;
   user-select: none;
+}
+
+.picker-column:active {
+  cursor: grabbing;
 }
 
 .picker-column::-webkit-scrollbar {
