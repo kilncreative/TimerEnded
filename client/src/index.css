@@ -79,7 +79,7 @@
   flex-direction: column;
 }
 
-/* iOS Timer Picker - Desktop Optimized */
+/* iOS Timer Picker - Smooth Scrolling */
 .timer-picker {
   background: #1C1C1E;
   border-radius: 16px;
@@ -106,14 +106,20 @@
 
 .picker-column {
   height: 132px;
-  overflow-y: auto;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
   scrollbar-width: none;
   -ms-overflow-style: none;
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 44px 0;
-  cursor: pointer;
+  padding: 0;
+  cursor: grab;
+  scroll-behavior: smooth;
+}
+
+.picker-column:active {
+  cursor: grabbing;
 }
 
 .picker-column:nth-child(1) {
@@ -143,11 +149,7 @@
   color: #FFFFFF;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   letter-spacing: -0.2px;
-  cursor: pointer;
-}
-
-.picker-item:hover {
-  opacity: 0.6;
+  scroll-snap-align: center;
 }
 
 .picker-item.selected {

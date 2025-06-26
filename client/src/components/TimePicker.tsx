@@ -23,11 +23,12 @@ export default function TimePicker({
 
   const itemHeight = 44;
 
-  const createPickerColumn = (value: number, max: number, onChange: (value: number) => void, ref: React.RefObject<HTMLDivElement>, label: string) => {
+  const createPickerColumn = (value: number, max: number, onChange: (value: number) => void, ref: React.RefObject<HTMLDivElement>) => {
     const items = [];
     
-    // Create visible items (only show 3 items at once)
-    for (let i = 0; i < max; i++) {
+    // Add padding items for smooth scrolling
+    for (let i = -2; i < max + 2; i++) {
+      const displayValue = i < 0 ? '' : i >= max ? '' : i.toString();
       const isSelected = i === value;
       
       items.push(
@@ -35,9 +36,8 @@ export default function TimePicker({
           key={i} 
           className={`picker-item ${isSelected ? 'selected' : ''}`}
           data-value={i}
-          onClick={() => onChange(i)}
         >
-          {i}
+          {displayValue}
         </div>
       );
     }
@@ -47,6 +47,7 @@ export default function TimePicker({
         className="picker-column" 
         ref={ref}
         onWheel={(e) => handleWheel(e, onChange, max, value)}
+        onScroll={(e) => handleScroll(e.currentTarget, onChange, max)}
       >
         {items}
       </div>
@@ -64,26 +65,32 @@ export default function TimePicker({
     }
   };
 
+  const handleScroll = (container: HTMLDivElement, onChange: (value: number) => void, max: number) => {
+    const scrollTop = container.scrollTop;
+    const itemIndex = Math.round(scrollTop / itemHeight);
+    const actualValue = itemIndex - 2; // Account for padding
+    
+    if (actualValue >= 0 && actualValue < max) {
+      onChange(actualValue);
+    }
+  };
+
   const scrollToValue = (ref: React.RefObject<HTMLDivElement>, value: number) => {
     if (ref.current) {
-      const container = ref.current;
-      const selectedItem = container.querySelector(`[data-value="${value}"]`) as HTMLElement;
-      if (selectedItem) {
-        const containerRect = container.getBoundingClientRect();
-        const itemRect = selectedItem.getBoundingClientRect();
-        const offset = itemRect.top - containerRect.top - (containerRect.height / 2) + (itemHeight / 2);
-        container.scrollTop += offset;
-      }
+      const targetScroll = (value + 2) * itemHeight; // Add 2 for padding
+      ref.current.scrollTop = targetScroll;
     }
   };
 
   useEffect(() => {
-    // Set initial positions
-    setTimeout(() => {
+    // Set initial positions with delay to ensure DOM is ready
+    const timer = setTimeout(() => {
       scrollToValue(hoursRef, hours);
       scrollToValue(minutesRef, minutes);
       scrollToValue(secondsRef, seconds);
-    }, 100);
+    }, 50);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -102,9 +109,9 @@ export default function TimePicker({
     <div className="picker-container">
       <div className="picker-overlay"></div>
       <div className="grid grid-cols-3 h-full">
-        {createPickerColumn(hours, 24, onHoursChange, hoursRef, 'hours')}
-        {createPickerColumn(minutes, 60, onMinutesChange, minutesRef, 'minutes')}
-        {createPickerColumn(seconds, 60, onSecondsChange, secondsRef, 'seconds')}
+        {createPickerColumn(hours, 24, onHoursChange, hoursRef)}
+        {createPickerColumn(minutes, 60, onMinutesChange, minutesRef)}
+        {createPickerColumn(seconds, 60, onSecondsChange, secondsRef)}
       </div>
     </div>
   );
