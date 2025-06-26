@@ -37,12 +37,11 @@ export default function TimePicker({
     
     for (let i = 0; i < totalItems; i++) {
       const itemValue = i % max;
-      const isSelected = itemValue === value;
       
       items.push(
         <div 
           key={i}
-          className={`picker-item ${isSelected ? 'selected' : ''}`}
+          className="picker-item"
           data-value={itemValue}
         >
           {itemValue.toString().padStart(2, '0')}
@@ -61,31 +60,22 @@ export default function TimePicker({
     let scrollTimeout: NodeJS.Timeout;
 
     const handleScroll = () => {
-      if (!ref.current) return;
+      if (!ref.current || isScrolling) return;
       
-      isScrolling = true;
       clearTimeout(scrollTimeout);
       
       scrollTimeout = setTimeout(() => {
         if (!ref.current) return;
         
         const scrollTop = ref.current.scrollTop;
-        const itemIndex = Math.round(scrollTop / itemHeight);
+        const centerPosition = scrollTop + (132 / 2); // 132 is container height
+        const itemIndex = Math.round((centerPosition - itemHeight / 2) / itemHeight);
         const newValue = itemIndex % max;
         
-        // Snap to position
-        const targetScrollTop = itemIndex * itemHeight;
-        ref.current.scrollTo({
-          top: targetScrollTop,
-          behavior: 'smooth'
-        });
-        
-        if (newValue !== value) {
+        if (newValue !== value && newValue >= 0) {
           onChange(newValue);
         }
-        
-        isScrolling = false;
-      }, 100);
+      }, 150);
     };
 
     return (
@@ -103,12 +93,14 @@ export default function TimePicker({
   const scrollToValue = (ref: React.RefObject<HTMLDivElement>, value: number, max: number) => {
     if (!ref.current) return;
     
-    // Find the middle occurrence of the value
+    // Position the selected value in the center (middle of 3 visible items)
     const middleRepeat = Math.floor(5 / 2); // 5 is repeatCount
     const targetIndex = middleRepeat * max + value;
-    const targetScrollTop = targetIndex * itemHeight - (itemHeight * 2); // Center in view
+    const containerHeight = 132; // picker container height
+    const centerOffset = (containerHeight / 2) - (itemHeight / 2);
+    const targetScrollTop = (targetIndex * itemHeight) - centerOffset;
     
-    ref.current.scrollTop = targetScrollTop;
+    ref.current.scrollTop = Math.max(0, targetScrollTop);
   };
 
   // Initialize scroll positions
