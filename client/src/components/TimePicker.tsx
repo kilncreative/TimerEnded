@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface TimePickerProps {
   hours: number;
@@ -21,181 +21,96 @@ export default function TimePicker({
   const minutesRef = useRef<HTMLDivElement>(null);
   const secondsRef = useRef<HTMLDivElement>(null);
 
-  const itemHeight = 40;
-  const visibleItems = 3; // Only 3 visible items
-  const centerIndex = Math.floor(visibleItems / 2); // Index of the center item (1)
+  const itemHeight = 44;
 
-  const createPickerItems = (max: number) => {
+  const createPickerColumn = (value: number, max: number, onChange: (value: number) => void, ref: React.RefObject<HTMLDivElement>) => {
     const items = [];
     
-    // Add padding items at the top (1 item)
-    for (let i = 0; i < centerIndex; i++) {
+    // Create a large list with padding to enable smooth scrolling
+    for (let i = -2; i < max + 2; i++) {
+      const displayValue = i < 0 ? '' : i >= max ? '' : i.toString();
+      const isSelected = i === value;
+      
       items.push(
-        <div key={`padding-top-${i}`} className="picker-item" style={{ height: itemHeight }}>
+        <div 
+          key={i} 
+          className={`picker-item ${isSelected ? 'selected' : ''}`}
+          data-value={i}
+        >
+          {displayValue}
         </div>
       );
     }
     
-    // Add actual items
-    for (let i = 0; i < max; i++) {
-      items.push(
-        <div key={i} className="picker-item text-white" style={{ height: itemHeight }}>
-          {i}
-        </div>
-      );
-    }
-    
-    // Add padding items at the bottom (1 item)
-    for (let i = 0; i < centerIndex; i++) {
-      items.push(
-        <div key={`padding-bottom-${i}`} className="picker-item" style={{ height: itemHeight }}>
-        </div>
-      );
-    }
-    
-    return items;
+    return (
+      <div 
+        className="picker-column" 
+        ref={ref}
+        onScroll={(e) => handleScroll(e.currentTarget, onChange, max)}
+      >
+        {items}
+      </div>
+    );
   };
 
-  const updateOpacity = (container: HTMLDivElement) => {
+  const handleScroll = (container: HTMLDivElement, onChange: (value: number) => void, max: number) => {
     const scrollTop = container.scrollTop;
-    const centerPosition = scrollTop + (container.offsetHeight / 2);
-    const items = container.querySelectorAll('.picker-item');
+    const itemIndex = Math.round(scrollTop / itemHeight);
+    const actualValue = itemIndex - 2; // Account for padding
     
-    items.forEach((item, index) => {
-      const element = item as HTMLElement;
-      const itemTop = index * itemHeight;
-      const itemCenter = itemTop + (itemHeight / 2);
-      const distance = Math.abs(centerPosition - itemCenter);
+    if (actualValue >= 0 && actualValue < max) {
+      onChange(actualValue);
       
-      if (distance < itemHeight / 2) {
-        // Center item - selected
-        element.style.opacity = '1';
-        element.style.fontSize = '24px';
-        element.style.fontWeight = '600';
-      } else if (distance < itemHeight) {
-        // Adjacent items - faded
-        element.style.opacity = '0.4';
-        element.style.fontSize = '24px';
-        element.style.fontWeight = '400';
-      } else {
-        // Far items - very faded
-        element.style.opacity = '0.15';
-        element.style.fontSize = '24px';
-        element.style.fontWeight = '400';
-      }
-    });
+      // Update visual selection
+      requestAnimationFrame(() => {
+        const items = container.querySelectorAll('.picker-item');
+        items.forEach((item, index) => {
+          const element = item as HTMLElement;
+          const itemValue = parseInt(element.dataset.value || '-1');
+          
+          if (itemValue === actualValue) {
+            element.classList.add('selected');
+          } else {
+            element.classList.remove('selected');
+          }
+        });
+      });
+    }
   };
 
-  const setupPicker = (
-    ref: React.RefObject<HTMLDivElement>,
-    value: number,
-    onChange: (value: number) => void,
-    max: number
-  ) => {
-    const container = ref.current;
-    if (!container) return;
-
-    let isScrolling = false;
-    let scrollTimeout: NodeJS.Timeout;
-
-    const handleScroll = () => {
-      isScrolling = true;
-      updateOpacity(container);
-      
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        isScrolling = false;
-        
-        // Snap to nearest item
-        const scrollTop = container.scrollTop;
-        const itemIndex = Math.round(scrollTop / itemHeight);
-        const targetScroll = itemIndex * itemHeight;
-        
-        container.scrollTo({
-          top: targetScroll,
-          behavior: 'smooth'
-        });
-        
-        // Calculate the actual value (accounting for padding)
-        const actualValue = itemIndex - centerIndex;
-        const clampedValue = Math.max(0, Math.min(actualValue, max - 1));
-        
-        if (clampedValue !== value) {
-          onChange(clampedValue);
-        }
-        
-        updateOpacity(container);
-      }, 150);
-    };
-
-    // Set initial scroll position
-    const initialScroll = (value + centerIndex) * itemHeight;
-    container.scrollTop = initialScroll;
-    updateOpacity(container);
-
-    container.addEventListener('scroll', handleScroll);
-    
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-      clearTimeout(scrollTimeout);
-    };
+  const scrollToValue = (ref: React.RefObject<HTMLDivElement>, value: number) => {
+    if (ref.current) {
+      const targetScroll = (value + 2) * itemHeight; // Add 2 for padding
+      ref.current.scrollTop = targetScroll;
+    }
   };
 
   useEffect(() => {
-    const cleanup1 = setupPicker(hoursRef, hours, onHoursChange, 24);
-    const cleanup2 = setupPicker(minutesRef, minutes, onMinutesChange, 60);
-    const cleanup3 = setupPicker(secondsRef, seconds, onSecondsChange, 60);
-
-    return () => {
-      cleanup1?.();
-      cleanup2?.();
-      cleanup3?.();
-    };
+    // Set initial positions
+    scrollToValue(hoursRef, hours);
+    scrollToValue(minutesRef, minutes);
+    scrollToValue(secondsRef, seconds);
   }, []);
 
-  // Update scroll positions when values change externally
   useEffect(() => {
-    if (hoursRef.current) {
-      const targetScroll = (hours + centerIndex) * itemHeight;
-      hoursRef.current.scrollTop = targetScroll;
-      updateOpacity(hoursRef.current);
-    }
+    scrollToValue(hoursRef, hours);
   }, [hours]);
 
   useEffect(() => {
-    if (minutesRef.current) {
-      const targetScroll = (minutes + centerIndex) * itemHeight;
-      minutesRef.current.scrollTop = targetScroll;
-      updateOpacity(minutesRef.current);
-    }
+    scrollToValue(minutesRef, minutes);
   }, [minutes]);
 
   useEffect(() => {
-    if (secondsRef.current) {
-      const targetScroll = (seconds + centerIndex) * itemHeight;
-      secondsRef.current.scrollTop = targetScroll;
-      updateOpacity(secondsRef.current);
-    }
+    scrollToValue(secondsRef, seconds);
   }, [seconds]);
 
   return (
     <div className="picker-container">
       <div className="picker-overlay"></div>
-      <div className="grid grid-cols-3 gap-4 h-full">
-        {/* Hours Picker */}
-        <div className="picker-column" ref={hoursRef}>
-          {createPickerItems(24)}
-        </div>
-        
-        {/* Minutes Picker */}
-        <div className="picker-column" ref={minutesRef}>
-          {createPickerItems(60)}
-        </div>
-        
-        {/* Seconds Picker */}
-        <div className="picker-column" ref={secondsRef}>
-          {createPickerItems(60)}
-        </div>
+      <div className="grid grid-cols-3 h-full">
+        {createPickerColumn(hours, 24, onHoursChange, hoursRef)}
+        {createPickerColumn(minutes, 60, onMinutesChange, minutesRef)}
+        {createPickerColumn(seconds, 60, onSecondsChange, secondsRef)}
       </div>
     </div>
   );

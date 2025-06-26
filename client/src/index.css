@@ -79,32 +79,33 @@
   flex-direction: column;
 }
 
-/* Apple iOS Clock Timer Picker - Clean Design */
+/* iOS Timer Picker - Perfect Replica */
 .timer-picker {
-  background: #2C2C2E;
-  border-radius: 13px;
+  background: #1C1C1E;
+  border-radius: 16px;
   width: 100%;
-  max-width: 350px;
+  max-width: 343px;
   overflow: hidden;
   position: relative;
   margin: 0 auto;
+  border: 0.5px solid #38383A;
 }
 
 .picker-headers {
-  padding: 20px 0 16px 0;
-  background: #2C2C2E;
-  border-bottom: 0.33px solid #48484A;
+  padding: 18px 24px 14px 24px;
+  background: #1C1C1E;
+  border-bottom: 0.5px solid #38383A;
 }
 
 .picker-container {
-  height: 120px;
+  height: 132px;
   overflow: hidden;
   position: relative;
-  background: #2C2C2E;
+  background: #1C1C1E;
 }
 
 .picker-column {
-  height: 120px;
+  height: 132px;
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
@@ -116,11 +117,11 @@
 }
 
 .picker-column:nth-child(1) {
-  border-right: 0.33px solid #48484A;
+  border-right: 0.5px solid #38383A;
 }
 
 .picker-column:nth-child(2) {
-  border-right: 0.33px solid #48484A;
+  border-right: 0.5px solid #38383A;
 }
 
 .picker-column::-webkit-scrollbar {
@@ -128,31 +129,37 @@
 }
 
 .picker-item {
-  height: 40px;
-  min-height: 40px;
+  height: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 400;
-  transition: all 0.2s ease-out;
+  transition: all 0.15s ease-out;
   user-select: none;
-  pointer-events: none;
   flex-shrink: 0;
-  opacity: 0.15;
+  opacity: 0.3;
   color: #FFFFFF;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-  letter-spacing: -0.3px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  letter-spacing: -0.2px;
+  scroll-snap-align: center;
+}
+
+.picker-item.selected {
+  opacity: 1;
+  font-weight: 600;
+  font-size: 20px;
 }
 
 .picker-overlay {
   position: absolute;
   top: 50%;
-  left: 8px;
-  right: 8px;
-  height: 40px;
-  transform: translateY(-20px);
-  background: rgba(99, 99, 102, 0.15);
+  left: 12px;
+  right: 12px;
+  height: 44px;
+  transform: translateY(-22px);
+  background: rgba(142, 142, 147, 0.12);
   border-radius: 8px;
   pointer-events: none;
   z-index: 5;
