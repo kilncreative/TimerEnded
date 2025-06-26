@@ -6,29 +6,28 @@ interface TimeValue {
   seconds: number;
 }
 
-type AlarmOption = '10 times' | '20 times' | 'Until Stopped';
+type AlarmOption = '5 times' | '10 times' | 'Until Canceled';
 
 interface TimerPickerProps {
   selectedTime: TimeValue;
   onTimeChange: (time: TimeValue) => void;
   onStart: () => void;
-  onCancel: () => void;
   alarmOption: AlarmOption;
   onAlarmOptionChange: (option: AlarmOption) => void;
 }
 
-export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCancel, alarmOption, onAlarmOptionChange }: TimerPickerProps) {
+export default function TimerPicker({ selectedTime, onTimeChange, onStart, alarmOption, onAlarmOptionChange }: TimerPickerProps) {
   const hoursRef = useRef<HTMLDivElement>(null);
   const minutesRef = useRef<HTMLDivElement>(null);
   const secondsRef = useRef<HTMLDivElement>(null);
   const [showAlarmDropdown, setShowAlarmDropdown] = useState(false);
   
-  const alarmOptions: AlarmOption[] = ['10 times', '20 times', 'Until Stopped'];
+  const alarmOptions: AlarmOption[] = ['5 times', '10 times', 'Until Canceled'];
 
   const generateNumbers = (max: number) => Array.from({ length: max }, (_, i) => i);
 
   const updatePickerSelection = (picker: HTMLDivElement, type: 'hours' | 'minutes' | 'seconds', shouldUpdateState = true) => {
-    const itemHeight = 32;
+    const itemHeight = 44;
     const scrollTop = picker.scrollTop;
     const selectedIndex = Math.round(scrollTop / itemHeight);
     
@@ -53,7 +52,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
     if (!ref.current) return;
 
     const picker = ref.current;
-    const itemHeight = 32; // Height of each picker item
+    const itemHeight = 44;
     
     const scrollToValue = (value: number) => {
       const scrollTop = value * itemHeight;
@@ -93,13 +92,86 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
       }
     };
 
+    // Mouse wheel support - default browser behavior for natural speed
+    const handleWheel = (e: WheelEvent) => {
+      // Don't prevent default - let browser handle scroll naturally
+      // This preserves the original working scroll speed
+    };
+
+    // Desktop drag support
+    let isDragging = false;
+    let startY = 0;
+    let startScrollTop = 0;
+    let hasMoved = false;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      startY = e.clientY;
+      startScrollTop = picker.scrollTop;
+      hasMoved = false;
+      picker.style.cursor = 'grabbing';
+      e.preventDefault();
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      
+      const deltaY = startY - e.clientY;
+      const newScrollTop = startScrollTop + deltaY;
+      picker.scrollTop = Math.max(0, newScrollTop);
+      hasMoved = true;
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging) {
+        isDragging = false;
+        picker.style.cursor = 'grab';
+        if (hasMoved) {
+          setTimeout(snapToNearest, 50);
+        }
+      }
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      if (hasMoved) {
+        e.preventDefault();
+        return;
+      }
+      
+      const rect = picker.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const centerY = picker.offsetHeight / 2;
+      const offset = y - centerY;
+      const itemsToMove = Math.round(offset / itemHeight);
+      
+      if (itemsToMove !== 0) {
+        const currentScroll = picker.scrollTop;
+        const newScroll = currentScroll + (itemsToMove * itemHeight);
+        picker.scrollTo({
+          top: Math.max(0, newScroll),
+          behavior: 'smooth'
+        });
+      }
+    };
+
     picker.addEventListener('scroll', handleScroll);
+    picker.addEventListener('wheel', handleWheel, { passive: false });
+    picker.addEventListener('mousedown', handleMouseDown);
+    picker.addEventListener('click', handleClick);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
     
-    // Initial selection update - don't change state on first load
+    // Initial selection update
     setTimeout(() => updatePickerSelection(picker, type, false), 100);
 
     return () => {
       picker.removeEventListener('scroll', handleScroll);
+      picker.removeEventListener('wheel', handleWheel);
+      picker.removeEventListener('mousedown', handleMouseDown);
+      picker.removeEventListener('click', handleClick);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
       clearTimeout(scrollTimeout);
     };
   };
@@ -119,133 +191,76 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, onCan
   const canStart = selectedTime.hours > 0 || selectedTime.minutes > 0 || selectedTime.seconds > 0;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-sm mx-auto space-y-6">
       {/* Time Picker Wheels */}
-      <div 
-        className="flex justify-center items-center rounded-2xl p-6"
-        style={{ backgroundColor: 'var(--dark-secondary)' }}
-      >
-        {/* Hours Picker */}
-        <div className="flex-1 text-center">
-          <div 
-            className="text-sm font-medium mb-3"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            hours
-          </div>
-          <div className="picker-wheel">
-            <div 
-              ref={hoursRef}
-              className="picker-container h-32 overflow-y-auto"
-            >
-              <div className="py-12 space-y-0">
-                {generateNumbers(24).map(hour => (
-                  <div
-                    key={hour}
-                    className="picker-item h-8 flex items-center justify-center text-2xl font-medium cursor-pointer"
-                    data-value={hour}
-                  >
-                    {hour}
-                  </div>
-                ))}
-              </div>
-            </div>
+      <div className="timer-picker">
+        <div className="picker-headers">
+          <div className="grid grid-cols-3 text-center">
+            <div className="picker-header">hours</div>
+            <div className="picker-header">min</div>
+            <div className="picker-header">sec</div>
           </div>
         </div>
-
-        {/* Minutes Picker */}
-        <div 
-          className="flex-1 text-center border-l border-r"
-          style={{ borderColor: 'var(--divider)' }}
-        >
-          <div 
-            className="text-sm font-medium mb-3"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            min
-          </div>
-          <div className="picker-wheel">
-            <div 
-              ref={minutesRef}
-              className="picker-container h-32 overflow-y-auto"
-            >
-              <div className="py-12 space-y-0">
-                {generateNumbers(60).map(minute => (
-                  <div
-                    key={minute}
-                    className="picker-item h-8 flex items-center justify-center text-2xl font-medium cursor-pointer"
-                    data-value={minute}
-                  >
-                    {minute}
-                  </div>
-                ))}
-              </div>
+        
+        <div className="picker-container">
+          <div className="picker-overlay"></div>
+          <div className="grid grid-cols-3 h-full">
+            {/* Hours Picker */}
+            <div className="picker-column" ref={hoursRef}>
+              {generateNumbers(24).map((num) => (
+                <div key={num} className="picker-item" data-value={num}>
+                  {num}
+                </div>
+              ))}
             </div>
-          </div>
-        </div>
 
-        {/* Seconds Picker */}
-        <div className="flex-1 text-center">
-          <div 
-            className="text-sm font-medium mb-3"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            sec
-          </div>
-          <div className="picker-wheel">
-            <div 
-              ref={secondsRef}
-              className="picker-container h-32 overflow-y-auto"
-            >
-              <div className="py-12 space-y-0">
-                {generateNumbers(60).map(second => (
-                  <div
-                    key={second}
-                    className="picker-item h-8 flex items-center justify-center text-2xl font-medium cursor-pointer"
-                    data-value={second}
-                  >
-                    {second}
-                  </div>
-                ))}
-              </div>
+            {/* Minutes Picker */}
+            <div className="picker-column" ref={minutesRef}>
+              {generateNumbers(60).map((num) => (
+                <div key={num} className="picker-item" data-value={num}>
+                  {num}
+                </div>
+              ))}
+            </div>
+
+            {/* Seconds Picker */}
+            <div className="picker-column" ref={secondsRef}>
+              {generateNumbers(60).map((num) => (
+                <div key={num} className="picker-item" data-value={num}>
+                  {num}
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* Control Buttons */}
       <div className="flex justify-center">
         <button
           onClick={onStart}
           disabled={!canStart}
           className="w-20 h-20 rounded-full flex items-center justify-center text-lg font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50"
-          style={{ backgroundColor: canStart ? 'var(--accent-green)' : 'var(--cancel-gray)' }}
+          style={{ backgroundColor: canStart ? '#30D158' : '#48484A', color: 'white' }}
         >
           Start
         </button>
       </div>
 
       {/* Timer Options */}
-      <div 
-        className="rounded-2xl px-6 py-4"
-        style={{ backgroundColor: 'var(--dark-secondary)' }}
-      >
+      <div className="bg-dark-secondary rounded-2xl px-6 py-4">
         <div className="flex items-center justify-between py-3 relative">
-          <span className="text-white font-medium">Alarm</span>
+          <span className="text-white font-medium">When Timer Ends</span>
           <button
             onClick={() => setShowAlarmDropdown(!showAlarmDropdown)}
-            className="flex items-center"
-            style={{ color: 'var(--text-secondary)' }}
+            className="flex items-center text-gray-400"
           >
             <span>{alarmOption}</span>
             <span className="ml-2">›</span>
           </button>
           
           {showAlarmDropdown && (
-            <div 
-              className="absolute top-full right-0 mt-2 rounded-2xl py-2 z-50 min-w-[150px]"
-              style={{ backgroundColor: 'var(--dark-tertiary)' }}
-            >
+            <div className="absolute top-full right-0 mt-2 bg-dark-tertiary rounded-2xl py-2 z-50 min-w-[150px]">
               {alarmOptions.map((option) => (
                 <button
                   key={option}

@@ -3,41 +3,38 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(0, 0%, 0%);
-  --foreground: hsl(0, 0%, 100%);
-  --muted: hsl(240, 3.7%, 15.9%);
-  --muted-foreground: hsl(240, 5%, 64.9%);
-  --popover: hsl(240, 10%, 3.9%);
-  --popover-foreground: hsl(0, 0%, 98%);
-  --card: hsl(240, 3.7%, 15.9%);
-  --card-foreground: hsl(0, 0%, 98%);
-  --border: hsl(240, 3.7%, 15.9%);
-  --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(142, 76%, 36%);
-  --primary-foreground: hsl(0, 0%, 98%);
-  --secondary: hsl(240, 3.7%, 15.9%);
-  --secondary-foreground: hsl(0, 0%, 98%);
-  --accent: hsl(240, 3.7%, 15.9%);
-  --accent-foreground: hsl(0, 0%, 98%);
-  --destructive: hsl(0, 62.8%, 30.6%);
-  --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(240, 4.9%, 83.9%);
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
   --radius: 0.5rem;
   
-  /* Timer-specific colors */
-  --dark-primary: hsl(0, 0%, 0%);
-  --dark-secondary: hsl(240, 3%, 11%);
-  --dark-tertiary: hsl(240, 3%, 17%);
-  --text-secondary: hsl(240, 5%, 56%);
-  --accent-green: hsl(142, 76%, 36%);
-  --cancel-gray: hsl(240, 3%, 28%);
-  --divider: hsl(240, 3%, 22%);
-  --timer-red: hsl(0, 84%, 60%);
+  /* iOS Colors */
+  --ios-green: #34C759;
+  --ios-red: #FF3B30;
+  --ios-gray: #8E8E93;
+  --ios-dark-gray: #2C2C2E;
+  --ios-light-gray: #8E8E93;
 }
 
 .dark {
-  --background: hsl(0, 0%, 0%);
-  --foreground: hsl(0, 0%, 100%);
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
   --muted: hsl(240, 3.7%, 15.9%);
   --muted-foreground: hsl(240, 5%, 64.9%);
   --popover: hsl(240, 10%, 3.9%);
@@ -46,8 +43,8 @@
   --card-foreground: hsl(0, 0%, 98%);
   --border: hsl(240, 3.7%, 15.9%);
   --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(142, 76%, 36%);
-  --primary-foreground: hsl(0, 0%, 98%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
   --secondary: hsl(240, 3.7%, 15.9%);
   --secondary-foreground: hsl(0, 0%, 98%);
   --accent: hsl(240, 3.7%, 15.9%);
@@ -64,123 +61,199 @@
   }
 
   body {
-    @apply font-sans antialiased;
-    background-color: var(--dark-primary);
-    color: var(--foreground);
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    @apply font-sans antialiased bg-background text-foreground;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
   }
 }
 
-@layer components {
-  .picker-container {
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  
-  .picker-container::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .picker-item {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    user-select: none;
-    line-height: 1;
-    margin: 0;
-    padding: 0;
-  }
-  
-  .picker-item.selected {
-    transform: scale(1.1);
-    opacity: 1;
-  }
-  
-  .picker-item:not(.selected) {
-    opacity: 0.3;
-    transform: scale(0.9);
-  }
-  
-  .countdown-display {
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
-    font-weight: 200;
-  }
-  
-  .button-pressed {
-    transform: scale(0.95);
-    transition: transform 0.1s ease-in-out;
-  }
-  
-  .expired-glow {
-    animation: pulse-red 2s infinite;
-  }
-  
-  @keyframes pulse-red {
-    0%, 100% { 
-      box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4);
-    }
-    50% { 
-      box-shadow: 0 0 0 10px rgba(255, 59, 48, 0);
-    }
-  }
-  
-  .slide-up {
-    animation: slideUp 0.3s ease-out;
-  }
-  
-  @keyframes slideUp {
-    from {
-      transform: translateY(20px);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
+/* Timer App Styles */
+.timer-app {
+  background: hsl(0, 0%, 0%);
+  color: hsl(0, 0%, 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 
-  .picker-wheel {
-    position: relative;
-    height: 128px;
-    overflow: hidden;
-    mask-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      black 25%,
-      black 75%,
-      transparent 100%
-    );
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      black 25%,
-      black 75%,
-      transparent 100%
-    );
-  }
+/* iOS Timer Picker - Working Version */
+.timer-picker {
+  background: #1C1C1E;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 343px;
+  overflow: hidden;
+  position: relative;
+  margin: 0 auto;
+  border: 0.5px solid #38383A;
+}
 
-  .picker-wheel::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: var(--divider);
-    transform: translateY(-16px);
-    z-index: 10;
-  }
+.picker-headers {
+  padding: 18px 24px 14px 24px;
+  background: #1C1C1E;
+  border-bottom: 0.5px solid #38383A;
+}
 
-  .picker-wheel::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: var(--divider);
-    transform: translateY(16px);
-    z-index: 10;
+.picker-header {
+  color: #8E8E93;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+}
+
+.picker-container {
+  height: 132px;
+  overflow: hidden;
+  position: relative;
+  background: #1C1C1E;
+}
+
+.picker-column {
+  height: 132px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  position: relative;
+  scroll-behavior: smooth;
+  padding: 44px 0;
+  cursor: grab;
+  user-select: none;
+}
+
+.picker-column:active {
+  cursor: grabbing;
+}
+
+.picker-column::-webkit-scrollbar {
+  display: none;
+}
+
+.picker-column:nth-child(1) {
+  border-right: 0.5px solid #38383A;
+}
+
+.picker-column:nth-child(2) {
+  border-right: 0.5px solid #38383A;
+}
+
+.picker-item {
+  height: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 400;
+  user-select: none;
+  flex-shrink: 0;
+  color: #FFFFFF;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  letter-spacing: -0.2px;
+  opacity: 0.3;
+  transition: opacity 0.2s ease-out;
+}
+
+.picker-item.selected {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.picker-overlay {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  right: 12px;
+  height: 44px;
+  transform: translateY(-22px);
+  background: rgba(142, 142, 147, 0.12);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Button Styles */
+.timer-button {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 500;
+  font-size: 1.125rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transition: transform 75ms ease;
+  border: none;
+  cursor: pointer;
+}
+
+.timer-button:active {
+  transform: scale(0.95);
+}
+
+.timer-button-green {
+  background: var(--ios-green);
+}
+
+.timer-button-red {
+  background: var(--ios-red);
+}
+
+.timer-button-gray {
+  background: var(--ios-gray);
+}
+
+.timer-button-disabled {
+  background: hsl(0, 0%, 30%);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.timer-button-disabled:active {
+  transform: none;
+}
+
+/* Timer Display */
+.timer-display {
+  font-size: 5rem;
+  font-weight: 200;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+@media (max-width: 380px) {
+  .timer-display {
+    font-size: 3.75rem;
   }
+}
+
+/* Elapsed Time */
+.elapsed-time {
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: var(--ios-light-gray);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* iOS Light Gray Color */
+.text-ios-light-gray {
+  color: var(--ios-light-gray);
+}
+
+/* Dark Gray Background */
+.bg-ios-dark-gray {
+  background: var(--ios-dark-gray);
+}
+
+.bg-ios-green {
+  background: var(--ios-green);
+}
+
+.bg-ios-red {
+  background: var(--ios-red);
 }

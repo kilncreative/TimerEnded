@@ -2,96 +2,96 @@
 
 ## Overview
 
-This is a sleek timer application built with React and TypeScript, featuring an iPhone-style scrollable time picker and comprehensive timer functionality. The application provides an intuitive interface for setting timers with support for hours, minutes, and seconds, along with timer management capabilities including pause, resume, and stop functionality.
+This is a full-stack timer application built with React, Express, and TypeScript. The application provides an iOS-style timer interface with functional scrollable time picking, countdown functionality, alarm sounds, and elapsed time tracking after completion. It features a modern UI using shadcn/ui components and Tailwind CSS, and is fully deployable to GitHub Pages with proper CSP configuration.
 
 ## System Architecture
 
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript
-- **Styling**: TailwindCSS with custom CSS variables for theming
-- **UI Components**: Radix UI primitives with shadcn/ui component library
+- **Build Tool**: Vite for fast development and building
+- **Styling**: Tailwind CSS with shadcn/ui component library
+- **State Management**: React hooks (useState, useEffect) with custom hooks
 - **Routing**: Wouter for lightweight client-side routing
-- **State Management**: React hooks for local state management
-- **Animation**: Framer Motion for smooth transitions and animations
-- **Build Tool**: Vite for fast development and optimized builds
+- **Data Fetching**: TanStack Query for server state management
 
 ### Backend Architecture
 - **Runtime**: Node.js 20 with Express.js
-- **Language**: TypeScript with ESM modules
-- **Development**: tsx for TypeScript execution
-- **Production**: esbuild for bundling
+- **Language**: TypeScript with ES modules
+- **API**: RESTful API structure (routes prefixed with /api)
+- **Development**: tsx for TypeScript execution in development
+- **Production**: esbuild for server bundling
 
-### Data Storage Solutions
+### Data Storage
 - **Database**: PostgreSQL 16 (configured but not yet implemented)
-- **ORM**: Drizzle ORM with schema definitions
-- **Current Storage**: In-memory storage implementation for development
-- **Session Management**: connect-pg-simple for PostgreSQL session storage
+- **ORM**: Drizzle ORM for type-safe database operations
+- **Current Storage**: In-memory storage implementation (MemStorage class)
+- **Schema**: Defined in shared/schema.ts with user table structure
 
 ## Key Components
 
-### Timer Components
-1. **TimerPicker**: iPhone-style scrollable time picker with hours, minutes, and seconds
-2. **TimerDisplay**: Shows countdown with pause/resume/stop controls
-3. **Timer Page**: Main timer interface managing all timer states
+### Frontend Components
+- **Timer Page**: Main timer interface with setup, running, paused, and completed states
+- **TimePicker**: Custom iOS-style wheel picker for hours, minutes, and seconds
+- **UI Components**: Comprehensive shadcn/ui component library including buttons, dialogs, forms, etc.
 
-### Timer States
-- `setup`: Initial state for setting timer duration
-- `active`: Timer counting down
-- `paused`: Timer temporarily stopped
-- `expired`: Timer completed with post-expiration tracking
+### Backend Components
+- **Routes**: Express route handlers in server/routes.ts
+- **Storage Interface**: Abstracted storage layer supporting both memory and database implementations
+- **Middleware**: Request logging, JSON parsing, and error handling
 
-### UI Framework
-- **Component Library**: Complete shadcn/ui implementation with Radix UI primitives
-- **Theming**: Dark theme with CSS custom properties
-- **Responsive Design**: Mobile-first approach with responsive utilities
+### Custom Hooks
+- **useTimer**: Manages timer state, countdown logic, alarm functionality, and screen transitions
+- **useToast**: Toast notification system
+- **useMobile**: Mobile device detection
 
 ## Data Flow
 
-1. **Timer Setup**: User selects time using scrollable picker interface
-2. **Timer Execution**: Countdown managed through React useEffect with intervals
-3. **State Management**: Timer state transitions handled through React hooks
-4. **Audio Feedback**: Browser audio API for timer completion notifications
-5. **Post-Expiration Tracking**: Continues tracking elapsed time after timer expires
+1. **Timer Setup**: User selects time using TimePicker component
+2. **Timer Execution**: useTimer hook manages countdown with setInterval
+3. **State Management**: Timer states (setup, running, paused, completed) control UI rendering
+4. **Audio Feedback**: Web Audio API generates alarm sounds when timer completes
+5. **Persistence**: Currently in-memory, designed for future database integration
 
 ## External Dependencies
 
-### Frontend Dependencies
-- **UI Libraries**: @radix-ui components, class-variance-authority, clsx, tailwind-merge
-- **Animation**: framer-motion for smooth transitions
-- **Data Fetching**: @tanstack/react-query for future API integration
-- **Form Handling**: react-hook-form with @hookform/resolvers
-- **Utilities**: date-fns for date manipulation, cmdk for command interfaces
-
-### Backend Dependencies
-- **Database**: @neondatabase/serverless, drizzle-orm, drizzle-zod
-- **Validation**: zod for schema validation
-- **Session**: connect-pg-simple for session management
+### Production Dependencies
+- **UI Framework**: React, React DOM
+- **Styling**: Tailwind CSS, class-variance-authority, clsx
+- **Components**: Radix UI primitives, shadcn/ui components
+- **Database**: Drizzle ORM, @neondatabase/serverless
+- **Server**: Express.js, connect-pg-simple
+- **Utilities**: date-fns, nanoid, zod
 
 ### Development Tools
-- **Build**: vite, esbuild, tsx
-- **Replit Integration**: @replit/vite-plugin-runtime-error-modal, @replit/vite-plugin-cartographer
+- **Build**: Vite, esbuild
+- **TypeScript**: Full type safety across frontend and backend
+- **Development**: tsx for server development, Replit integration
 
 ## Deployment Strategy
 
-### Development Environment
-- **Platform**: Replit with Node.js 20, PostgreSQL 16 modules
-- **Development Server**: Vite dev server on port 5000
-- **Hot Reload**: Enabled through Vite with runtime error overlay
+### Development
+- **Command**: `npm run dev`
+- **Port**: 5000 (mapped to external port 80)
+- **Hot Reload**: Vite HMR for frontend, tsx watch mode for backend
 
-### Production Deployment
-- **Target**: Replit Autoscale deployment
-- **Build Process**: Vite build for client, esbuild for server bundling
-- **Static Assets**: Client built to dist/public, served by Express
-- **Server**: Express serving both API and static files
+### Production Build
+- **Frontend**: Vite builds to dist/public
+- **Backend**: esbuild bundles server to dist/index.js
+- **Start**: `npm run start` runs the production build
+- **GitHub Pages**: `node build-github.js` builds frontend-only for static hosting
 
-### Database Strategy
-- **Current**: In-memory storage for development
-- **Planned**: PostgreSQL with Drizzle ORM migrations
-- **Schema**: User management system prepared but not implemented
+### Replit Configuration
+- **Modules**: nodejs-20, web, postgresql-16
+- **Deployment**: Autoscale deployment target
+- **Workflows**: Parallel execution with automatic port detection
 
 ## Changelog
 
-- June 23, 2025. Initial setup
+- June 26, 2025: Fixed desktop functionality - removed cancel button, added working drag support, restored smooth mouse wheel scrolling
+- June 26, 2025: Added GitHub Pages deployment configuration with CSP headers
+- June 26, 2025: Integrated working TimePicker from successful GitHub repository
+- June 26, 2025: Fixed timer functionality with proper alarm system and elapsed time tracking
+- June 24, 2025: Initial setup
 
 ## User Preferences
 
