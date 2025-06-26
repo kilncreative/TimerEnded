@@ -231,7 +231,6 @@ export default function Timer() {
             selectedTime={selectedTime}
             onTimeChange={setSelectedTime}
             onStart={handleStart}
-            onCancel={handleStop}
             alarmOption={alarmOption}
             onAlarmOptionChange={setAlarmOption}
           />
