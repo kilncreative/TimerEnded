@@ -92,12 +92,13 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, alarm
       }
     };
 
-    // Desktop mouse wheel support
+    // Desktop mouse wheel support - much faster scrolling
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const delta = e.deltaY > 0 ? 1 : -1;
+      // Use actual wheel delta for natural scrolling speed
+      const scrollAmount = Math.abs(e.deltaY) > 100 ? e.deltaY : e.deltaY * 3;
       const currentScroll = picker.scrollTop;
-      const newScroll = currentScroll + (delta * itemHeight);
+      const newScroll = currentScroll + scrollAmount;
       picker.scrollTop = Math.max(0, newScroll);
     };
 
