@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface TimePickerProps {
   hours: number;
@@ -20,6 +20,7 @@ export default function TimePicker({
   const [isDragging, setIsDragging] = useState<string | null>(null);
   const [startY, setStartY] = useState(0);
   const [startValue, setStartValue] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
 
   const itemHeight = 44;
 
@@ -30,19 +31,28 @@ export default function TimePicker({
     columnId: string
   ) => {
     const visibleItems = [];
+    const currentDragOffset = isDragging === columnId ? dragOffset : 0;
     
-    // Show 3 items: previous, current, next
-    for (let i = -1; i <= 1; i++) {
+    // Show 5 items for smooth scrolling effect
+    for (let i = -2; i <= 2; i++) {
       const itemValue = (value + i + max) % max;
       const isCenter = i === 0;
+      const distance = Math.abs(i);
       
       visibleItems.push(
         <div 
-          key={i}
+          key={`${itemValue}-${i}`}
           className={`picker-item ${isCenter ? 'selected' : ''}`}
           style={{
-            opacity: isCenter ? 1 : 0.3,
-            fontWeight: isCenter ? 600 : 400
+            opacity: isCenter ? 1 : Math.max(0.1, 0.6 - (distance * 0.3)),
+            fontWeight: isCenter ? 600 : 400,
+            transform: `translateY(${(i * itemHeight) + currentDragOffset}px)`,
+            position: 'absolute',
+            top: '50%',
+            left: 0,
+            right: 0,
+            marginTop: `-${itemHeight / 2}px`,
+            transition: isDragging === columnId ? 'none' : 'all 0.3s ease-out'
           }}
         >
           {itemValue.toString().padStart(2, '0')}
@@ -99,22 +109,25 @@ export default function TimePicker({
       if (!isDragging) return;
 
       const deltaY = e.clientY - startY;
+      setDragOffset(-deltaY);
+      
       const itemsMoved = Math.round(deltaY / itemHeight);
       
       if (isDragging === 'hours') {
         const newValue = (startValue - itemsMoved + 24) % 24;
-        onHoursChange(newValue);
+        if (newValue !== hours) onHoursChange(newValue);
       } else if (isDragging === 'minutes') {
         const newValue = (startValue - itemsMoved + 60) % 60;
-        onMinutesChange(newValue);
+        if (newValue !== minutes) onMinutesChange(newValue);
       } else if (isDragging === 'seconds') {
         const newValue = (startValue - itemsMoved + 60) % 60;
-        onSecondsChange(newValue);
+        if (newValue !== seconds) onSecondsChange(newValue);
       }
     };
 
     const handleMouseUp = () => {
       setIsDragging(null);
+      setDragOffset(0);
     };
 
     if (isDragging) {
@@ -126,7 +139,7 @@ export default function TimePicker({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, startY, startValue, onHoursChange, onMinutesChange, onSecondsChange]);
+  }, [isDragging, startY, startValue, hours, minutes, seconds, onHoursChange, onMinutesChange, onSecondsChange]);
 
   return (
     <div className="picker-container">

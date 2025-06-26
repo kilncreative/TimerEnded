@@ -107,12 +107,10 @@
 .picker-column {
   height: 132px;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   user-select: none;
   cursor: grab;
   padding: 0;
+  overflow: hidden;
 }
 
 .picker-column:active {
