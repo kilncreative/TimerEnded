@@ -1,24 +1,24 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, './client/src'),
-      '@assets': resolve(__dirname, './attached_assets'),
-    },
-  },
-  root: './client',
   base: './',
   build: {
-    outDir: '../dist',
+    outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
-      output: {
-        manualChunks: undefined,
-      },
-    },
+      input: {
+        main: path.resolve(__dirname, 'client/index.html')
+      }
+    }
   },
-});
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'client/src'),
+      '@assets': path.resolve(__dirname, 'attached_assets')
+    }
+  },
+  root: 'client'
+})

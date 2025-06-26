@@ -1,42 +1,82 @@
-# Deploy Timer App to GitHub Pages
+# GitHub Pages Deployment Guide
+
+This timer app is configured for easy deployment to GitHub Pages with proper Content Security Policy headers.
 
 ## Quick Setup
 
-Your timer app works perfectly on GitHub Pages! Here's how to deploy it:
+1. **Fork/Clone** this repository to your GitHub account
+2. **Enable GitHub Pages** in your repository settings:
+   - Go to Settings → Pages
+   - Source: Deploy from a branch
+   - Branch: gh-pages
+   - Folder: / (root)
+3. **Push to main branch** - deployment happens automatically
 
-### 1. Create GitHub Repository
-- Go to GitHub.com and create a new repository
-- Name it something like `timer-app` or `my-timer`
-- Make it public (required for free GitHub Pages)
+## Deployment Process
 
-### 2. Upload Files
-Copy these files to your repository:
-- `client/` folder (entire folder)  
-- `vite.config.github.ts`
-- `.github/workflows/deploy.yml`
+The app uses GitHub Actions for automatic deployment:
 
-### 3. Enable GitHub Pages
-- Go to repository Settings → Pages
-- Source: "GitHub Actions"
-- The workflow will automatically deploy when you push changes
+1. **Triggers**: Push to main branch
+2. **Build**: Uses `vite.config.github.ts` for frontend-only build
+3. **Deploy**: Publishes to `gh-pages` branch
+4. **Access**: Available at `https://yourusername.github.io/your-repo-name`
 
-### 4. Access Your App
-- Your timer will be available at: `https://yourusername.github.io/repository-name`
-- Bookmark this URL for daily use
+## Manual Build (Optional)
 
-## What Works on GitHub Pages
+To test the build locally:
 
-✅ **Full timer functionality** - all counting, alarms, pause/resume
-✅ **iPhone-style picker interface** - smooth scrolling wheels
-✅ **Responsive design** - works on phone and desktop
-✅ **Offline capability** - works without internet after first load
-✅ **Add to home screen** - works like a native app
+```bash
+# Build for GitHub Pages
+node build-github.js
 
-## Daily Usage Tips
+# Serve locally to test
+npx serve dist
+```
 
-- **Mobile**: Add to home screen for app-like experience
-- **Desktop**: Bookmark or create desktop shortcut
-- **Offline**: Works even without internet connection
-- **Fast loading**: No server delays, instant response
+## Content Security Policy
 
-Your timer app will be completely free to use with unlimited access!
+The app includes the required CSP header in `client/index.html`:
+
+```html
+<meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline';">
+```
+
+This allows:
+- `'unsafe-eval'` for Vite's development features
+- `'unsafe-inline'` for Tailwind CSS styles
+
+## PWA Features
+
+The app is configured as a Progressive Web App with:
+- Web App Manifest (`/manifest.json`)
+- Apple Touch Icon support
+- Mobile-optimized viewport
+- Full-screen capable on iOS
+
+## File Structure
+
+```
+├── .github/workflows/deploy.yml  # GitHub Actions workflow
+├── vite.config.github.ts         # GitHub Pages build config
+├── build-github.js               # Build script
+├── client/index.html             # Main HTML with CSP header
+├── client/public/manifest.json   # PWA manifest
+└── DEPLOYMENT.md                 # This guide
+```
+
+## Repository Settings
+
+Ensure your repository has:
+- **GitHub Pages enabled** (Settings → Pages)
+- **Actions enabled** (Settings → Actions)
+- **Branch protection off** for `gh-pages` branch (to allow auto-deployment)
+
+## Troubleshooting
+
+- **Build fails**: Check Node.js version (requires 18+)
+- **Page not loading**: Verify GitHub Pages is enabled
+- **CSP errors**: Ensure the meta tag is properly formatted
+- **Assets not loading**: Check that base path is set to `./` in config
+
+The app will be available at your GitHub Pages URL once deployment completes.
