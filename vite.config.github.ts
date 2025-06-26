@@ -5,12 +5,22 @@ import path from 'path'
 export default defineConfig({
   plugins: [react()],
   base: './',
+  define: {
+    'process.env.NODE_ENV': '"production"'
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    minify: 'esbuild',
+    target: 'es2015',
+    sourcemap: false,
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'client/index.html')
+      },
+      output: {
+        manualChunks: undefined,
+        format: 'es'
       }
     }
   },
