@@ -33,9 +33,9 @@ async function buildForGitHub() {
       const htmlFile = path.resolve(__dirname, 'dist/index.html')
       let htmlContent = fs.readFileSync(htmlFile, 'utf8')
       
-      // Replace the CSP meta tag with the correct hash
+      // Replace the CSP meta tag - temporarily allow unsafe-eval until we can eliminate all eval usage
       const cspRegex = /<meta http-equiv="Content-Security-Policy" content="[^"]*">/
-      const newCSP = `<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-${hash}'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">`
+      const newCSP = `<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">`
       
       htmlContent = htmlContent.replace(cspRegex, newCSP)
       fs.writeFileSync(htmlFile, htmlContent)
