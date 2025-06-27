@@ -33,16 +33,7 @@ npx serve dist
 
 ## Content Security Policy
 
-The app includes the required CSP header in `client/index.html`:
-
-```html
-<meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline';">
-```
-
-This allows:
-- `'unsafe-eval'` for Vite's development features
-- `'unsafe-inline'` for Tailwind CSS styles
+The app has CSP headers removed for maximum compatibility with GitHub Pages hosting. Modern React applications with bundled dependencies work best without restrictive CSP policies in static hosting environments.
 
 ## PWA Features
 
