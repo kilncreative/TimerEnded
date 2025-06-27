@@ -1,0 +1,40 @@
+Here are the most common reasons eval appears and how to fix them:
+1. You Are Using a Development Build of a Framework (Most Likely Cause)
+Many JavaScript bundlers (like Webpack) use eval in their development builds to create source maps quickly. This is controlled by the devtool option in your Webpack configuration.
+The Problem: You are likely building your project with a development setting like devtool: 'eval-source-map' or devtool: 'eval'.
+The Fix: You need to create a production build. Change the devtool setting in your webpack.config.js (or equivalent file) to a setting that does not use eval, such as 'source-map'. Then, rebuild your project and push the production files to GitHub.
+Example for webpack.config.js:
+Generated javascript
+// webpack.config.js
+module.exports = {
+  // ... other settings
+  mode: 'production', // Make sure you're in production mode
+  devtool: 'source-map', // Use a non-eval source map for production
+};
+Use code with caution.
+JavaScript
+If using Create React App: Running npm run build automatically creates a production-ready, CSP-compliant build. Make sure you are deploying the contents of the /build folder.
+2. Your Code (or a Library) Explicitly Uses eval()
+You need to find where eval() is being used and replace it.
+How to Find It: Use the search function in your code editor to search your entire project for the string eval(.
+Common Replacements:
+Parsing JSON: If you are using eval() to parse a JSON string, stop immediately and use JSON.parse() instead.
+Generated javascript
+// Don't do this:
+const myData = eval('(' + jsonString + ')');
+
+// Do this instead:
+const myData = JSON.parse(jsonString);
+Use code with caution.
+JavaScript
+Accessing Dynamic Properties: If you're using eval to access an object property with a dynamic name, use bracket notation.
+Generated javascript
+const myObject = { name: 'Alice' };
+const propertyName = 'name';
+
+// Don't do this:
+const value = eval('myObject.' + propertyName);
+
+// Do this instead:
+const value = myObject[propertyName];
+Use code with caution.
