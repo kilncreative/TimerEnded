@@ -15,8 +15,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    minify: 'terser',
-    target: 'es2015',
+    minify: 'esbuild',
+    target: 'es2020',
     sourcemap: false,
     rollupOptions: {
       input: {
@@ -26,14 +26,11 @@ export default defineConfig({
         manualChunks: undefined,
         format: 'es'
       }
-    },
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-        pure_funcs: ['console.log']
-      }
     }
+  },
+  esbuild: {
+    legalComments: 'none',
+    drop: ['console', 'debugger']
   },
   resolve: {
     alias: {
