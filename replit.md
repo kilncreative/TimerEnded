@@ -87,7 +87,7 @@ This is a full-stack timer application built with React, Express, and TypeScript
 
 ## Changelog
 
-- June 27, 2025: Resolved CSP eval issue by using script hash instead of 'unsafe-eval' - eliminates CSP violations while maintaining security
+- June 27, 2025: CRITICAL FIX - Completely eliminated all eval usage from React build by disabling MSApp compatibility code for IE/Edge. Updated Vite config to target modern browsers only and exclude legacy MSApp.execUnsafeLocalFunction. CSP now uses strict policy without 'unsafe-eval'
 - June 26, 2025: Fixed desktop functionality - removed cancel button, added working drag support, restored smooth mouse wheel scrolling
 - June 26, 2025: Added GitHub Pages deployment configuration with CSP headers
 - June 26, 2025: Integrated working TimePicker from successful GitHub repository
