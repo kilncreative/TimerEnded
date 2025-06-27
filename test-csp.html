@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <title>CSP Test</title>
+</head>
+<body>
+    <h1>CSP Test</h1>
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('result').innerHTML = 'Basic script works!';
+        
+        // Test if eval works
+        try {
+            eval('console.log("Eval test passed")');
+            document.getElementById('result').innerHTML += '<br>Eval works!';
+        } catch (e) {
+            document.getElementById('result').innerHTML += '<br>Eval blocked: ' + e.message;
+        }
+        
+        // Test if Function constructor works
+        try {
+            new Function('console.log("Function constructor test passed")')();
+            document.getElementById('result').innerHTML += '<br>Function constructor works!';
+        } catch (e) {
+            document.getElementById('result').innerHTML += '<br>Function constructor blocked: ' + e.message;
+        }
+    </script>
+</body>
+</html>
