@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <title>Timer</title>
+    <meta name="description" content="iOS-style timer app with elapsed time tracking">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 384px;
+            margin: 0 auto;
+        }
+        
+        .timer-picker {
+            background: rgba(28, 28, 30, 0.8);
+            border-radius: 20px;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(20px);
+        }
+        
+        .picker-headers {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #8e8e93;
+        }
+        
+        .picker-container {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+        
+        .picker-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(transparent 0%, rgba(0,0,0,0.3) 45%, rgba(0,0,0,0.3) 55%, transparent 100%);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .picker-column {
+            height: 100%;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding: 80px 0;
+            scroll-snap-type: y mandatory;
+        }
+        
+        .picker-column::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .picker-item {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 300;
+            color: rgba(255,255,255,0.6);
+            scroll-snap-align: center;
+            transition: all 0.2s ease;
+        }
+        
+        .picker-item.selected {
+            color: white;
+            font-weight: 500;
+            transform: scale(1.1);
+        }
+        
+        .pickers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            height: 100%;
+        }
+        
+        .start-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: #30d158;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .start-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .start-button:active {
+            transform: scale(0.95);
+        }
+        
+        .start-button:disabled {
+            background: #48484a;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .timer-options {
+            background: rgba(28, 28, 30, 0.8);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(20px);
+        }
+        
+        .option-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        .option-label {
+            font-weight: 500;
+        }
+        
+        .option-select {
+            background: none;
+            border: none;
+            color: #8e8e93;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .running-timer {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .timer-display {
+            font-size: 72px;
+            font-weight: 300;
+            margin-bottom: 40px;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .timer-controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .control-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .pause-button {
+            background: #ff9500;
+            color: white;
+        }
+        
+        .stop-button {
+            background: #ff3b30;
+            color: white;
+        }
+        
+        .completed-timer {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .completion-message {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .elapsed-time {
+            font-size: 18px;
+            color: #8e8e93;
+            margin-bottom: 40px;
+        }
+        
+        .reset-button {
+            background: #007aff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="setup-screen">
+            <div class="timer-picker">
+                <div class="picker-headers">
+                    <div>hours</div>
+                    <div>min</div>
+                    <div>sec</div>
+                </div>
+                <div class="picker-container">
+                    <div class="picker-overlay"></div>
+                    <div class="pickers-grid">
+                        <div class="picker-column" id="hours-picker"></div>
+                        <div class="picker-column" id="minutes-picker"></div>
+                        <div class="picker-column" id="seconds-picker"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="start-button" id="start-button" disabled>Start</button>
+            
+            <div class="timer-options">
+                <div class="option-row">
+                    <span class="option-label">When Timer Ends</span>
+                    <select class="option-select" id="alarm-select">
+                        <option value="5 times">5 times</option>
+                        <option value="10 times">10 times</option>
+                        <option value="Until Canceled">Until Canceled</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div id="running-screen" style="display: none;">
+            <div class="running-timer">
+                <div class="timer-display" id="timer-display">00:00</div>
+                <div class="timer-controls">
+                    <button class="control-button pause-button" id="pause-button">Pause</button>
+                    <button class="control-button stop-button" id="stop-button">Stop</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="completed-screen" style="display: none;">
+            <div class="completed-timer">
+                <div class="completion-message">Timer Completed!</div>
+                <div class="elapsed-time" id="elapsed-time">Elapsed: 0 seconds</div>
+                <button class="control-button reset-button" id="reset-button">New Timer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Timer state
+        let selectedTime = { hours: 0, minutes: 0, seconds: 0 };
+        let timerState = 'setup';
+        let timerInterval = null;
+        let remainingTime = 0;
+        let completedTime = null;
+        let elapsedInterval = null;
+        let alarmCount = 0;
+        let alarmOption = '5 times';
+        
+        // Initialize pickers
+        function initializePickers() {
+            const hoursPicker = document.getElementById('hours-picker');
+            const minutesPicker = document.getElementById('minutes-picker');
+            const secondsPicker = document.getElementById('seconds-picker');
+            
+            // Generate hours (0-23)
+            for (let i = 0; i <= 23; i++) {
+                const item = document.createElement('div');
+                item.className = 'picker-item';
+                item.textContent = i;
+                item.dataset.value = i;
+                hoursPicker.appendChild(item);
+            }
+            
+            // Generate minutes/seconds (0-59)
+            for (let picker of [minutesPicker, secondsPicker]) {
+                for (let i = 0; i <= 59; i++) {
+                    const item = document.createElement('div');
+                    item.className = 'picker-item';
+                    item.textContent = i.toString().padStart(2, '0');
+                    item.dataset.value = i;
+                    picker.appendChild(item);
+                }
+            }
+            
+            // Add scroll listeners
+            addPickerListeners(hoursPicker, 'hours');
+            addPickerListeners(minutesPicker, 'minutes');
+            addPickerListeners(secondsPicker, 'seconds');
+            
+            // Set initial positions
+            updatePickerSelection(hoursPicker, 'hours');
+            updatePickerSelection(minutesPicker, 'minutes');
+            updatePickerSelection(secondsPicker, 'seconds');
+        }
+        
+        function addPickerListeners(picker, type) {
+            let isScrolling = false;
+            
+            picker.addEventListener('scroll', () => {
+                if (isScrolling) return;
+                isScrolling = true;
+                setTimeout(() => {
+                    updatePickerSelection(picker, type);
+                    isScrolling = false;
+                }, 100);
+            });
+        }
+        
+        function updatePickerSelection(picker, type) {
+            const items = picker.querySelectorAll('.picker-item');
+            const containerHeight = picker.clientHeight;
+            const scrollTop = picker.scrollTop;
+            
+            let selectedIndex = 0;
+            let minDistance = Infinity;
+            
+            items.forEach((item, index) => {
+                item.classList.remove('selected');
+                const itemTop = item.offsetTop - scrollTop;
+                const itemCenter = itemTop + item.offsetHeight / 2;
+                const containerCenter = containerHeight / 2;
+                const distance = Math.abs(itemCenter - containerCenter);
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    selectedIndex = index;
+                }
+            });
+            
+            items[selectedIndex].classList.add('selected');
+            selectedTime[type] = parseInt(items[selectedIndex].dataset.value);
+            updateStartButton();
+        }
+        
+        function updateStartButton() {
+            const startButton = document.getElementById('start-button');
+            const hasTime = selectedTime.hours > 0 || selectedTime.minutes > 0 || selectedTime.seconds > 0;
+            startButton.disabled = !hasTime;
+        }
+        
+        function startTimer() {
+            remainingTime = selectedTime.hours * 3600 + selectedTime.minutes * 60 + selectedTime.seconds;
+            timerState = 'running';
+            showScreen('running-screen');
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(() => {
+                remainingTime--;
+                updateTimerDisplay();
+                
+                if (remainingTime <= 0) {
+                    completeTimer();
+                }
+            }, 1000);
+        }
+        
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            timerState = 'paused';
+            document.getElementById('pause-button').textContent = 'Resume';
+            document.getElementById('pause-button').onclick = resumeTimer;
+        }
+        
+        function resumeTimer() {
+            timerInterval = setInterval(() => {
+                remainingTime--;
+                updateTimerDisplay();
+                
+                if (remainingTime <= 0) {
+                    completeTimer();
+                }
+            }, 1000);
+            timerState = 'running';
+            document.getElementById('pause-button').textContent = 'Pause';
+            document.getElementById('pause-button').onclick = pauseTimer;
+        }
+        
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerState = 'setup';
+            showScreen('setup-screen');
+            document.getElementById('pause-button').textContent = 'Pause';
+            document.getElementById('pause-button').onclick = pauseTimer;
+        }
+        
+        function completeTimer() {
+            clearInterval(timerInterval);
+            completedTime = Date.now();
+            timerState = 'completed';
+            showScreen('completed-screen');
+            playAlarm();
+            startElapsedTimer();
+        }
+        
+        function startElapsedTimer() {
+            updateElapsedTime();
+            elapsedInterval = setInterval(updateElapsedTime, 1000);
+        }
+        
+        function updateElapsedTime() {
+            if (!completedTime) return;
+            
+            const elapsed = Math.floor((Date.now() - completedTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            
+            let text = '';
+            if (minutes > 0) {
+                text = `${minutes} minute${minutes !== 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''} ago`;
+            } else {
+                text = `${seconds} second${seconds !== 1 ? 's' : ''} ago`;
+            }
+            
+            document.getElementById('elapsed-time').textContent = `Your timer ended: ${text}`;
+        }
+        
+        function playAlarm() {
+            // Create audio context for alarm
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const maxAlarms = alarmOption === 'Until Canceled' ? Infinity : parseInt(alarmOption);
+            
+            function beep() {
+                if (alarmCount >= maxAlarms) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+                
+                alarmCount++;
+                
+                if (alarmCount < maxAlarms) {
+                    setTimeout(beep, 800);
+                }
+            }
+            
+            beep();
+        }
+        
+        function resetTimer() {
+            clearInterval(elapsedInterval);
+            completedTime = null;
+            alarmCount = 0;
+            timerState = 'setup';
+            showScreen('setup-screen');
+        }
+        
+        function updateTimerDisplay() {
+            const hours = Math.floor(remainingTime / 3600);
+            const minutes = Math.floor((remainingTime % 3600) / 60);
+            const seconds = remainingTime % 60;
+            
+            let display = '';
+            if (hours > 0) {
+                display = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            document.getElementById('timer-display').textContent = display;
+        }
+        
+        function showScreen(screenId) {
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('running-screen').style.display = 'none';
+            document.getElementById('completed-screen').style.display = 'none';
+            document.getElementById(screenId).style.display = 'block';
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializePickers();
+            
+            document.getElementById('start-button').onclick = startTimer;
+            document.getElementById('pause-button').onclick = pauseTimer;
+            document.getElementById('stop-button').onclick = stopTimer;
+            document.getElementById('reset-button').onclick = resetTimer;
+            
+            document.getElementById('alarm-select').onchange = (e) => {
+                alarmOption = e.target.value;
+            };
+        });
+    </script>
+</body>
+</html>
