@@ -8,13 +8,15 @@ export default defineConfig({
   define: {
     'process.env.NODE_ENV': '"production"',
     '__DEV__': false,
-    'process.env.DEBUG': 'false'
+    'process.env.DEBUG': 'false',
+    'global': 'globalThis',
+    'MSApp': 'undefined'
   },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
     minify: 'esbuild',
-    target: 'es2020',
+    target: ['es2020', 'chrome80', 'firefox78', 'safari14'],
     sourcemap: false,
     rollupOptions: {
       input: {
@@ -23,7 +25,8 @@ export default defineConfig({
       output: {
         manualChunks: undefined,
         format: 'es'
-      }
+      },
+      external: ['MSApp']
     }
   },
   esbuild: {
