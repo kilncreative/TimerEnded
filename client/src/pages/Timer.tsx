@@ -26,7 +26,6 @@ export default function Timer() {
   
   // Audio context needs to be created after user interaction on iOS
   const audioContextRef = useRef<AudioContext | null>(null);
-  const audioElementRef = useRef<HTMLAudioElement | null>(null);
   
   const initializeAudio = async () => {
     if (!audioContextRef.current) {
@@ -41,39 +40,44 @@ export default function Timer() {
     }
   };
 
-  const createSingleChime = () => {
+  const createSingleChime = async () => {
     console.log('Creating chime...');
     
-    // Force vibration on iOS with explicit user agent check
+    // VIBRATION FIRST - Force on iPhone
     try {
       if (navigator.vibrate) {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        if (isIOS) {
-          // iOS-specific vibration pattern
-          navigator.vibrate([500, 100, 500]);
-          console.log('iOS vibration pattern triggered');
-        } else {
-          navigator.vibrate(800);
-          console.log('Standard vibration triggered');
-        }
-      } else {
-        console.log('Vibration API not available');
+        navigator.vibrate(800);
+        console.log('Vibration triggered');
       }
     } catch (error) {
       console.warn('Vibration failed:', error);
     }
     
-    // Use HTML5 Audio element for iOS compatibility
+    // AUDIO SECOND
     try {
-      if (audioElementRef.current) {
-        audioElementRef.current.currentTime = 0;
-        audioElementRef.current.play().then(() => {
-          console.log('Audio element chime played successfully');
-        }).catch(error => {
-          console.warn('Audio element play failed:', error);
-        });
+      if (!audioContextRef.current) {
+        await initializeAudio();
+      }
+      
+      if (audioContextRef.current && audioContextRef.current.state === 'running') {
+        const oscillator = audioContextRef.current.createOscillator();
+        const gainNode = audioContextRef.current.createGain();
+        
+        oscillator.frequency.setValueAtTime(1000, audioContextRef.current.currentTime);
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.4, audioContextRef.current.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + 0.8);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContextRef.current.destination);
+        
+        oscillator.start(audioContextRef.current.currentTime);
+        oscillator.stop(audioContextRef.current.currentTime + 0.8);
+        
+        console.log('Audio chime played');
       } else {
-        console.warn('Audio element not available');
+        console.warn('AudioContext not available');
       }
     } catch (error) {
       console.warn('Audio playback failed:', error);
@@ -87,10 +91,10 @@ export default function Timer() {
     
     let currentChime = 0;
     
-    const playNextChime = () => {
+    const playNextChime = async () => {
       currentChime++;
       console.log(`Playing chime ${currentChime} of ${maxChimes === Infinity ? '∞' : maxChimes}`);
-      createSingleChime();
+      await createSingleChime();
       
       if (currentChime < maxChimes) {
         alarmIntervalRef.current = setTimeout(playNextChime, 2000); // 2 second delay between chimes
@@ -160,24 +164,9 @@ export default function Timer() {
     };
   }, [state, expiredAt]);
 
-  const handleStart = () => {
-    // Create audio element for iOS compatibility (works better than Web Audio API)
-    try {
-      const audio = new Audio();
-      audio.preload = 'auto';
-      // Create a short beep sound as data URL
-      audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMdBiuQ1fTPcCwGJojM8tCNOQgUM7DlwZhUIgpWrOL3vWYdBSyR1vPPcSYGKIrM8tKNOQgUM7DlwZhUIgsXaLvt558NEAxQp+PwtmMcBzqR1vLNeSMGKobL8NORPwkVanPS56lUF';
-      audioElementRef.current = audio;
-      console.log('Audio element created for iOS');
-      
-      // Immediate vibration test
-      if ('vibrate' in navigator) {
-        navigator.vibrate(100);
-        console.log('Vibration test - should feel buzz now');
-      }
-    } catch (error) {
-      console.warn('Audio setup failed:', error);
-    }
+  const handleStart = async () => {
+    // Initialize audio on user interaction for iOS compatibility
+    await initializeAudio();
     
     const totalSeconds = selectedTime.hours * 3600 + selectedTime.minutes * 60 + selectedTime.seconds;
     setRemainingTime(totalSeconds);
