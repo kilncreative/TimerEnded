@@ -8,16 +8,21 @@ async function buildForVercel() {
   try {
     // Build with Vercel config
     await build({
-      configFile: 'vite.config.vercel.ts'
+      configFile: './vite.config.vercel.ts',
+      root: process.cwd()
     })
     
-    // Copy the Vercel-specific HTML template
-    const sourceHtml = path.resolve('client/index.vercel.html')
+    // Move the built HTML to correct location
+    const builtHtml = path.resolve('dist/client/index.vercel.html')
     const targetHtml = path.resolve('dist/index.html')
     
-    if (fs.existsSync(sourceHtml)) {
-      fs.copyFileSync(sourceHtml, targetHtml)
-      console.log('✅ Copied Vercel HTML template')
+    if (fs.existsSync(builtHtml)) {
+      fs.copyFileSync(builtHtml, targetHtml)
+      // Clean up the client directory
+      fs.rmSync(path.resolve('dist/client'), { recursive: true, force: true })
+      console.log('✅ Fixed build structure - moved HTML to dist root')
+    } else {
+      throw new Error('Build failed - source HTML not found')
     }
     
     // Create manifest.json for PWA
