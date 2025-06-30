@@ -20,87 +20,63 @@ export default function Timer() {
   const [elapsedSinceExpired, setElapsedSinceExpired] = useState<number>(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const expiredIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Initialize audio alarm system
-  useEffect(() => {
-    audioRef.current = new Audio();
-    audioRef.current.volume = 0.8;
-    
-    let alarmIntervalRef: NodeJS.Timeout | null = null;
-    let alarmCount = 0;
-    
-    const createSingleBeep = () => {
-      try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator1 = audioContext.createOscillator();
-        const oscillator2 = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator1.frequency.setValueAtTime(800, audioContext.currentTime);
-        oscillator2.frequency.setValueAtTime(1000, audioContext.currentTime);
-        
-        oscillator1.type = 'sine';
-        oscillator2.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        
-        oscillator1.connect(gainNode);
-        oscillator2.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator1.start(audioContext.currentTime);
-        oscillator2.start(audioContext.currentTime);
-        oscillator1.stop(audioContext.currentTime + 0.3);
-        oscillator2.stop(audioContext.currentTime + 0.3);
-      } catch (error) {
-        console.warn('Web Audio API not supported');
+  // Alarm system
+  const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const createSingleChime = () => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.8);
+      
+      // Vibrate for silent mode support
+      if (navigator.vibrate) {
+        navigator.vibrate(800);
       }
-    };
-    
-    const createAlarmSound = () => {
-      alarmCount = 0;
-      createSingleBeep();
-      alarmCount++;
-      
-      const maxBeeps = alarmOption === '5 times' ? 5 : alarmOption === '10 times' ? 10 : Infinity;
-      
-      alarmIntervalRef = setInterval(() => {
-        if (alarmCount < maxBeeps) {
-          createSingleBeep();
-          alarmCount++;
-        } else if (alarmOption !== 'Until Canceled') {
-          if (alarmIntervalRef) {
-            clearInterval(alarmIntervalRef);
-            alarmIntervalRef = null;
-          }
-        }
-      }, 500);
-    };
-    
-    const stopAlarm = () => {
-      if (alarmIntervalRef) {
-        clearInterval(alarmIntervalRef);
-        alarmIntervalRef = null;
-        alarmCount = 0;
+    } catch (error) {
+      console.warn('Web Audio API not supported');
+      // Fallback vibration if audio fails
+      if (navigator.vibrate) {
+        navigator.vibrate(800);
       }
-    };
-    
-    if (audioRef.current) {
-      const originalPlay = audioRef.current.play.bind(audioRef.current);
-      audioRef.current.play = () => {
-        createAlarmSound();
-        return originalPlay().catch(() => createAlarmSound());
-      };
-      
-      (audioRef.current as any).stopAlarm = stopAlarm;
     }
+  };
+  
+  const startAlarm = () => {
+    let chimeCount = 0;
+    const maxChimes = alarmOption === '5 times' ? 5 : alarmOption === '10 times' ? 10 : Infinity;
     
-    return () => {
-      stopAlarm();
+    const playNextChime = () => {
+      createSingleChime();
+      chimeCount++;
+      
+      if (chimeCount < maxChimes) {
+        alarmIntervalRef.current = setTimeout(playNextChime, 2000); // 2 second delay between chimes
+      }
     };
-  }, [alarmOption]);
+    
+    playNextChime(); // Start first chime immediately
+  };
+  
+  const stopAlarm = () => {
+    if (alarmIntervalRef.current) {
+      clearTimeout(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+  };
 
   // Timer countdown logic
   useEffect(() => {
@@ -110,9 +86,7 @@ export default function Timer() {
           if (prev <= 1) {
             setState('expired');
             setExpiredAt(new Date());
-            if (audioRef.current) {
-              audioRef.current.play();
-            }
+            startAlarm();
             return 0;
           }
           return prev - 1;
@@ -151,6 +125,7 @@ export default function Timer() {
       if (expiredIntervalRef.current) {
         clearInterval(expiredIntervalRef.current);
       }
+      stopAlarm();
     };
   }, [state, expiredAt]);
 
@@ -173,9 +148,7 @@ export default function Timer() {
     setRemainingTime(0);
     setExpiredAt(null);
     setElapsedSinceExpired(0);
-    if (audioRef.current && (audioRef.current as any).stopAlarm) {
-      (audioRef.current as any).stopAlarm();
-    }
+    stopAlarm();
   };
 
   const handleReset = () => {
@@ -183,9 +156,7 @@ export default function Timer() {
     setRemainingTime(0);
     setExpiredAt(null);
     setElapsedSinceExpired(0);
-    if (audioRef.current && (audioRef.current as any).stopAlarm) {
-      (audioRef.current as any).stopAlarm();
-    }
+    stopAlarm();
   };
 
   const formatTime = (seconds: number): string => {
@@ -291,11 +262,7 @@ export default function Timer() {
               <div className="flex flex-col space-y-4">
                 <button 
                   className="bg-ios-red text-white px-8 py-3 rounded-xl font-medium text-lg transition-transform duration-75 active:scale-95"
-                  onClick={() => {
-                    if (audioRef.current && (audioRef.current as any).stopAlarm) {
-                      (audioRef.current as any).stopAlarm();
-                    }
-                  }}
+                  onClick={stopAlarm}
                 >
                   Stop Alarm
                 </button>
