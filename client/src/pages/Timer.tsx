@@ -40,26 +40,29 @@ export default function Timer() {
     }
   };
 
-  const createSingleChime = async () => {
+  const createSingleChime = () => {
     console.log('Creating chime...');
     
-    // Force vibration first for iOS
+    // Vibration attempt (multiple patterns for iOS)
     try {
       if (navigator.vibrate) {
-        navigator.vibrate(800);
-        console.log('Vibration triggered');
+        // Try multiple vibration patterns for iOS compatibility
+        navigator.vibrate([800]);
+        setTimeout(() => navigator.vibrate && navigator.vibrate(200), 100);
+        console.log('Multi-pattern vibration triggered');
       }
     } catch (error) {
       console.warn('Vibration failed:', error);
     }
     
-    // Then try audio
+    // Audio using stored context
     try {
-      if (!audioContextRef.current) {
-        await initializeAudio();
-      }
-      
-      if (audioContextRef.current && audioContextRef.current.state === 'running') {
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        // Resume if suspended
+        if (audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume();
+        }
+        
         const oscillator = audioContextRef.current.createOscillator();
         const gainNode = audioContextRef.current.createGain();
         
@@ -75,9 +78,9 @@ export default function Timer() {
         oscillator.start(audioContextRef.current.currentTime);
         oscillator.stop(audioContextRef.current.currentTime + 0.8);
         
-        console.log('Audio chime played');
+        console.log('Audio chime played, context state:', audioContextRef.current.state);
       } else {
-        console.warn('AudioContext not available');
+        console.warn('AudioContext not available or closed');
       }
     } catch (error) {
       console.warn('Audio playback failed:', error);
@@ -91,10 +94,10 @@ export default function Timer() {
     
     let currentChime = 0;
     
-    const playNextChime = async () => {
+    const playNextChime = () => {
       currentChime++;
       console.log(`Playing chime ${currentChime} of ${maxChimes === Infinity ? '∞' : maxChimes}`);
-      await createSingleChime();
+      createSingleChime();
       
       if (currentChime < maxChimes) {
         alarmIntervalRef.current = setTimeout(playNextChime, 2000); // 2 second delay between chimes
@@ -165,8 +168,30 @@ export default function Timer() {
   }, [state, expiredAt]);
 
   const handleStart = async () => {
-    // Initialize audio on user interaction for iOS compatibility
-    await initializeAudio();
+    // Force audio context creation with immediate test sound for iOS
+    try {
+      const testContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const testOsc = testContext.createOscillator();
+      const testGain = testContext.createGain();
+      
+      testGain.gain.setValueAtTime(0.001, testContext.currentTime); // Very quiet test
+      testOsc.connect(testGain);
+      testGain.connect(testContext.destination);
+      testOsc.start();
+      testOsc.stop(testContext.currentTime + 0.01);
+      
+      // Store working context
+      audioContextRef.current = testContext;
+      console.log('Audio context activated via user gesture');
+      
+      // Test vibration immediately
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+        console.log('Vibration test triggered');
+      }
+    } catch (error) {
+      console.warn('Audio/vibration test failed:', error);
+    }
     
     const totalSeconds = selectedTime.hours * 3600 + selectedTime.minutes * 60 + selectedTime.seconds;
     setRemainingTime(totalSeconds);
