@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Timer from "@/pages/Timer";
 import type { ReactNode } from 'react';
+import { Analytics } from "@vercel/analytics/next"
 
 
 
