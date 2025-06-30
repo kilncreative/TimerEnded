@@ -2,6 +2,20 @@ import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Timer from "@/pages/Timer";
+import type { ReactNode } from 'react';
+import { Analytics } from '@vercel/analytics/react';   // ← new
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+        <Analytics />                                   {/* ← new */}
+      </body>
+    </html>
+  );
+}
+
 
 function Router() {
   return (
