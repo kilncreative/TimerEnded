@@ -4,6 +4,7 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  base: '/',
   define: {
     'process.env.NODE_ENV': '"production"',
     '__DEV__': false,
@@ -18,8 +19,9 @@ export default defineConfig({
     rollupOptions: {
       input: path.resolve(__dirname, 'client/index.vercel.html'),
       output: {
-        manualChunks: undefined,
-        format: 'es'
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
     }
   },
