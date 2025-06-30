@@ -9,7 +9,7 @@ interface TimeValue {
   seconds: number;
 }
 
-type AlarmOption = '5 times' | '10 times' | 'Until Canceled';
+type AlarmOption = '10 times' | '20 times' | 'Until Canceled';
 
 export default function Timer() {
   const [state, setState] = useState<TimerState>('setup');
@@ -24,47 +24,82 @@ export default function Timer() {
   // Alarm system
   const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
-  const createSingleChime = () => {
+  // Audio context needs to be created after user interaction on iOS
+  const audioContextRef = useRef<AudioContext | null>(null);
+  
+  const initializeAudio = async () => {
+    if (!audioContextRef.current) {
+      try {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        if (audioContextRef.current.state === 'suspended') {
+          await audioContextRef.current.resume();
+        }
+      } catch (error) {
+        console.warn('Audio initialization failed:', error);
+      }
+    }
+  };
+
+  const createSingleChime = async () => {
+    console.log('Creating chime...');
+    
+    // Force vibration first for iOS
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
-      oscillator.type = 'sine';
-      
-      gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.8);
-      
-      // Vibrate for silent mode support
       if (navigator.vibrate) {
         navigator.vibrate(800);
+        console.log('Vibration triggered');
       }
     } catch (error) {
-      console.warn('Web Audio API not supported');
-      // Fallback vibration if audio fails
-      if (navigator.vibrate) {
-        navigator.vibrate(800);
+      console.warn('Vibration failed:', error);
+    }
+    
+    // Then try audio
+    try {
+      if (!audioContextRef.current) {
+        await initializeAudio();
       }
+      
+      if (audioContextRef.current && audioContextRef.current.state === 'running') {
+        const oscillator = audioContextRef.current.createOscillator();
+        const gainNode = audioContextRef.current.createGain();
+        
+        oscillator.frequency.setValueAtTime(1000, audioContextRef.current.currentTime);
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.4, audioContextRef.current.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + 0.8);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContextRef.current.destination);
+        
+        oscillator.start(audioContextRef.current.currentTime);
+        oscillator.stop(audioContextRef.current.currentTime + 0.8);
+        
+        console.log('Audio chime played');
+      } else {
+        console.warn('AudioContext not available');
+      }
+    } catch (error) {
+      console.warn('Audio playback failed:', error);
     }
   };
   
   const startAlarm = () => {
-    let chimeCount = 0;
-    const maxChimes = alarmOption === '5 times' ? 5 : alarmOption === '10 times' ? 10 : Infinity;
+    console.log('Starting alarm with option:', alarmOption);
+    const maxChimes = alarmOption === '10 times' ? 10 : alarmOption === '20 times' ? 20 : Infinity;
+    console.log('Max chimes:', maxChimes);
     
-    const playNextChime = () => {
-      createSingleChime();
-      chimeCount++;
+    let currentChime = 0;
+    
+    const playNextChime = async () => {
+      currentChime++;
+      console.log(`Playing chime ${currentChime} of ${maxChimes === Infinity ? '∞' : maxChimes}`);
+      await createSingleChime();
       
-      if (chimeCount < maxChimes) {
+      if (currentChime < maxChimes) {
         alarmIntervalRef.current = setTimeout(playNextChime, 2000); // 2 second delay between chimes
+      } else {
+        console.log('Alarm sequence finished');
       }
     };
     
@@ -129,7 +164,10 @@ export default function Timer() {
     };
   }, [state, expiredAt]);
 
-  const handleStart = () => {
+  const handleStart = async () => {
+    // Initialize audio on user interaction for iOS compatibility
+    await initializeAudio();
+    
     const totalSeconds = selectedTime.hours * 3600 + selectedTime.minutes * 60 + selectedTime.seconds;
     setRemainingTime(totalSeconds);
     setState('active');
