@@ -4,7 +4,6 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/',
   define: {
     'process.env.NODE_ENV': '"production"',
     '__DEV__': false,
@@ -17,9 +16,7 @@ export default defineConfig({
     target: 'es2020',
     sourcemap: false,
     rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'client/index.html')
-      },
+      input: path.resolve(__dirname, 'client/index.vercel.html'),
       output: {
         manualChunks: undefined,
         format: 'es'
@@ -31,6 +28,5 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'client/src'),
       '@assets': path.resolve(__dirname, 'attached_assets')
     }
-  },
-  root: 'client'
+  }
 })
