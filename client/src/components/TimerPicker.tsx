@@ -6,7 +6,7 @@ interface TimeValue {
   seconds: number;
 }
 
-type AlarmOption = '5 times' | '10 times' | 'Until Canceled';
+type AlarmOption = '10 times' | '20 times' | 'Until Canceled';
 
 interface TimerPickerProps {
   selectedTime: TimeValue;
@@ -22,7 +22,7 @@ export default function TimerPicker({ selectedTime, onTimeChange, onStart, alarm
   const secondsRef = useRef<HTMLDivElement>(null);
   const [showAlarmDropdown, setShowAlarmDropdown] = useState(false);
   
-  const alarmOptions: AlarmOption[] = ['5 times', '10 times', 'Until Canceled'];
+  const alarmOptions: AlarmOption[] = ['10 times', '20 times', 'Until Canceled'];
 
   const generateNumbers = (max: number) => Array.from({ length: max }, (_, i) => i);
 
