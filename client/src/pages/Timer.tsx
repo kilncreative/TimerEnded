@@ -26,6 +26,7 @@ export default function Timer() {
   
   // Audio context needs to be created after user interaction on iOS
   const audioContextRef = useRef<AudioContext | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
   
   const initializeAudio = async () => {
     if (!audioContextRef.current) {
@@ -43,44 +44,36 @@ export default function Timer() {
   const createSingleChime = () => {
     console.log('Creating chime...');
     
-    // Vibration attempt (multiple patterns for iOS)
+    // Force vibration on iOS with explicit user agent check
     try {
       if (navigator.vibrate) {
-        // Try multiple vibration patterns for iOS compatibility
-        navigator.vibrate([800]);
-        setTimeout(() => navigator.vibrate && navigator.vibrate(200), 100);
-        console.log('Multi-pattern vibration triggered');
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+          // iOS-specific vibration pattern
+          navigator.vibrate([500, 100, 500]);
+          console.log('iOS vibration pattern triggered');
+        } else {
+          navigator.vibrate(800);
+          console.log('Standard vibration triggered');
+        }
+      } else {
+        console.log('Vibration API not available');
       }
     } catch (error) {
       console.warn('Vibration failed:', error);
     }
     
-    // Audio using stored context
+    // Use HTML5 Audio element for iOS compatibility
     try {
-      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-        // Resume if suspended
-        if (audioContextRef.current.state === 'suspended') {
-          audioContextRef.current.resume();
-        }
-        
-        const oscillator = audioContextRef.current.createOscillator();
-        const gainNode = audioContextRef.current.createGain();
-        
-        oscillator.frequency.setValueAtTime(1000, audioContextRef.current.currentTime);
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.4, audioContextRef.current.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + 0.8);
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContextRef.current.destination);
-        
-        oscillator.start(audioContextRef.current.currentTime);
-        oscillator.stop(audioContextRef.current.currentTime + 0.8);
-        
-        console.log('Audio chime played, context state:', audioContextRef.current.state);
+      if (audioElementRef.current) {
+        audioElementRef.current.currentTime = 0;
+        audioElementRef.current.play().then(() => {
+          console.log('Audio element chime played successfully');
+        }).catch(error => {
+          console.warn('Audio element play failed:', error);
+        });
       } else {
-        console.warn('AudioContext not available or closed');
+        console.warn('Audio element not available');
       }
     } catch (error) {
       console.warn('Audio playback failed:', error);
@@ -163,34 +156,27 @@ export default function Timer() {
       if (expiredIntervalRef.current) {
         clearInterval(expiredIntervalRef.current);
       }
-      stopAlarm();
+      // Don't stop alarm in cleanup - let it run until manually stopped
     };
   }, [state, expiredAt]);
 
-  const handleStart = async () => {
-    // Force audio context creation with immediate test sound for iOS
+  const handleStart = () => {
+    // Create audio element for iOS compatibility (works better than Web Audio API)
     try {
-      const testContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const testOsc = testContext.createOscillator();
-      const testGain = testContext.createGain();
+      const audio = new Audio();
+      audio.preload = 'auto';
+      // Create a short beep sound as data URL
+      audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMdBiuQ1fTPcCwGJojM8tCNOQgUM7DlwZhUIgpWrOL3vWYdBSyR1vPPcSYGKIrM8tKNOQgUM7DlwZhUIgsXaLvt558NEAxQp+PwtmMcBzqR1vLNeSMGKobL8NORPwkVanPS56lUF';
+      audioElementRef.current = audio;
+      console.log('Audio element created for iOS');
       
-      testGain.gain.setValueAtTime(0.001, testContext.currentTime); // Very quiet test
-      testOsc.connect(testGain);
-      testGain.connect(testContext.destination);
-      testOsc.start();
-      testOsc.stop(testContext.currentTime + 0.01);
-      
-      // Store working context
-      audioContextRef.current = testContext;
-      console.log('Audio context activated via user gesture');
-      
-      // Test vibration immediately
-      if (navigator.vibrate) {
-        navigator.vibrate(50);
-        console.log('Vibration test triggered');
+      // Immediate vibration test
+      if ('vibrate' in navigator) {
+        navigator.vibrate(100);
+        console.log('Vibration test - should feel buzz now');
       }
     } catch (error) {
-      console.warn('Audio/vibration test failed:', error);
+      console.warn('Audio setup failed:', error);
     }
     
     const totalSeconds = selectedTime.hours * 3600 + selectedTime.minutes * 60 + selectedTime.seconds;
